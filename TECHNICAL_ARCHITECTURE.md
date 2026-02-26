@@ -32,7 +32,7 @@ graph TD
 
 ## 2. Technology Description
 
-- Frontend: Next.js@14 + React@18 + TailwindCSS@3 + Shadcn/UI
+- Frontend: Next.js@15 (React@19) + TailwindCSS@4 + Shadcn/UI
 - Backend: Node.js + NestJS
 - Database: PostgreSQL + Prisma ORM
 - Business Logic: Pure TypeScript packages
@@ -56,8 +56,50 @@ graph TD
 | /products | Správa produktů |
 | /settings | Nastavení organizace |
 | /bank-accounts | Správa bankovních účtů |
+| /pos | Pokladní systém (Cash Desk) |
+| /edi | Elektronická výměna dat |
+| /hr | Lidské zdroje a Cestovní příkazy |
+| /admin | Administrace systému (SuperAdmin) |
 
-## 4. API definitions
+## 4. Implemented Modules (Phases)
+
+Based on the codebase structure, the following 33 modules/phases are implemented:
+
+1. Analytics
+2. Api-keys
+3. Assets
+4. Audit
+5. Auth (Identity & Security)
+6. Backup
+7. Cash-desk
+8. Communication
+9. Contracts
+10. Crm
+11. Database
+12. Edi
+13. Expenses
+14. External-api
+15. Hr
+16. Intelligence (AI)
+17. Inventory
+18. Invoices
+19. Marketing
+20. Organizations
+21. Pos
+22. Pricing
+23. Projects
+24. Sales
+25. Security
+26. System-health
+27. Time-tracking
+28. Travel
+29. Users
+30. Webhooks
+31. Business Logic (Shared)
+32. UI Components (Shared)
+33. Utilities (Shared)
+
+## 5. API definitions
 
 ### 4.1 Authentication API
 

@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
-export type UserRole = 'ADMIN' | 'WORKER' | 'CLIENT';
+export type UserRole = 'SUPERADMIN' | 'MANAGER' | 'ACCOUNTANT' | 'USER' | 'CLIENT';
 
 export type User = {
   id: string;
@@ -11,6 +11,7 @@ export type User = {
   name: string | null;
   role: UserRole;
   avatarUrl?: string;
+  phoneNumber?: string;
 };
 
 type AuthContextType = {

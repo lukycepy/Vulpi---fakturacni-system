@@ -36,8 +36,9 @@ model User {
   authenticators     Authenticator[]
   identityProviders  IdentityProvider[]
 
-  organizationId String?       @map("organization_id")
-  organization   Organization? @relation(fields: [organizationId], references: [id])
+  phoneNumber        String?   @map("phone_number")
+  avatarUrl          String?   @map("avatar_url")
+
   memberships    Membership[]
   timeEntries    TimeEntry[]
   reimbursements Expense[]     @relation("UserReimbursements")
@@ -102,7 +103,6 @@ model Organization {
   createdAt    DateTime      @default(now()) @map("created_at")
   updatedAt    DateTime      @updatedAt @map("updated_at")
   memberships  Membership[]
-  users        User[]
   taxRules     TaxRule[]
   invoices     Invoice[]
   bankAccounts BankAccount[]
