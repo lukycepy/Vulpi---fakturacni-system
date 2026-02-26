@@ -1,7 +1,8 @@
-export async function getBep(organizationId: string) {
-  const res = await fetch(`/api/crm/bep?organizationId=${organizationId}`);
+export async function getBep(organizationId: string, fetcher: (url: string, init?: RequestInit) => Promise<Response> = fetch) {
+  const res = await fetcher(`/api/crm/bep?organizationId=${organizationId}`);
   if (!res.ok) {
-    throw new Error('Failed to fetch BEP');
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to fetch BEP');
   }
   return res.json();
 }

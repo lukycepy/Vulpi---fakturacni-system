@@ -2,6 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useOrganization } from '@/components/providers/organization-provider';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Modal } from '@/components/ui/modal';
+import { toast } from 'sonner';
+import { Copy, Plus, Trash2, Key, Webhook } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export default function DeveloperSettingsPage() {
   const { currentOrg } = useOrganization();
@@ -9,6 +17,13 @@ export default function DeveloperSettingsPage() {
   const [webhooks, setWebhooks] = useState<any[]>([]);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Modal states
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
+  const [keyName, setKeyName] = useState('');
+  
+  const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
+  const [webhookUrl, setWebhookUrl] = useState('');
 
   useEffect(() => {
     if (currentOrg) {
@@ -18,144 +33,322 @@ export default function DeveloperSettingsPage() {
   }, [currentOrg]);
 
   const loadKeys = async () => {
-    const res = await fetch(`/api/api-keys?organizationId=${currentOrg?.id}`);
-    if (res.ok) setKeys(await res.json());
+    try {
+      const res = await fetch(`/api/api-keys?organizationId=${currentOrg?.id}`);
+      if (res.ok) setKeys(await res.json());
+    } catch (error) {
+      console.error('Failed to load keys:', error);
+      toast.error('Nepodařilo se načíst API klíče');
+    }
   };
 
   const loadWebhooks = async () => {
-    const res = await fetch(`/api/webhooks?organizationId=${currentOrg?.id}`);
-    if (res.ok) setWebhooks(await res.json());
+    try {
+      const res = await fetch(`/api/webhooks?organizationId=${currentOrg?.id}`);
+      if (res.ok) setWebhooks(await res.json());
+    } catch (error) {
+      console.error('Failed to load webhooks:', error);
+      toast.error('Nepodařilo se načíst webhooky');
+    }
   };
 
-  const createKey = async () => {
-    const name = prompt('Název klíče (např. E-shop):');
-    if (!name) return;
+  const handleCreateKey = async () => {
+    if (!keyName.trim()) {
+      toast.error('Zadejte název klíče');
+      return;
+    }
 
     setLoading(true);
     try {
         const res = await fetch('/api/api-keys', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ organizationId: currentOrg?.id, name })
+            body: JSON.stringify({ organizationId: currentOrg?.id, name: keyName })
         });
+        
+        if (!res.ok) throw new Error('Failed to create key');
+        
         const data = await res.json();
         setNewKey(data.rawKey);
         loadKeys();
+        setIsKeyModalOpen(false);
+        setKeyName('');
+        toast.success('API klíč vytvořen');
+    } catch (error) {
+        console.error(error);
+        toast.error('Chyba při vytváření klíče');
     } finally {
         setLoading(false);
     }
   };
 
-  const deleteKey = async (id: string) => {
-      if(!confirm('Opravdu smazat klíč?')) return;
-      await fetch(`/api/api-keys/${id}?organizationId=${currentOrg?.id}`, { method: 'DELETE' });
-      loadKeys();
+  const handleDeleteKey = async (id: string) => {
+      try {
+        const res = await fetch(`/api/api-keys/${id}?organizationId=${currentOrg?.id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed to delete key');
+        
+        loadKeys();
+        toast.success('API klíč smazán');
+      } catch (error) {
+        console.error(error);
+        toast.error('Chyba při mazání klíče');
+      }
   };
 
-  const createWebhook = async () => {
-      const url = prompt('Webhook URL:');
-      if (!url) return;
+  const handleCreateWebhook = async () => {
+      if (!webhookUrl.trim()) {
+        toast.error('Zadejte URL webhooku');
+        return;
+      }
       
-      await fetch('/api/webhooks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-              organizationId: currentOrg?.id, 
-              url,
-              events: ['invoice.paid', 'invoice.sent'] // Default events
-          })
-      });
-      loadWebhooks();
+      try {
+        const res = await fetch('/api/webhooks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                organizationId: currentOrg?.id, 
+                url: webhookUrl,
+                events: ['invoice.paid', 'invoice.sent'] // Default events
+            })
+        });
+
+        if (!res.ok) throw new Error('Failed to create webhook');
+
+        loadWebhooks();
+        setIsWebhookModalOpen(false);
+        setWebhookUrl('');
+        toast.success('Webhook přidán');
+      } catch (error) {
+        console.error(error);
+        toast.error('Chyba při vytváření webhooku');
+      }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Zkopírováno do schránky');
   };
 
   if (!currentOrg) return <div className="p-6">Vyberte organizaci</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Vývojářské nastavení</h1>
+    <div className="max-w-5xl mx-auto p-6 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Vývojářské nastavení</h1>
+        <p className="text-muted-foreground mt-2">
+          Spravujte API klíče a webhooky pro integraci s externími systémy.
+        </p>
+      </div>
 
       {/* API Keys Section */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded shadow mb-8">
-        <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">API Klíče</h2>
-            <button 
-                onClick={createKey} 
-                disabled={loading}
-                className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-                + Generovat klíč
-            </button>
-        </div>
-
-        {newKey && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                <strong className="font-bold">Váš nový API klíč: </strong>
-                <span className="font-mono bg-white px-2 py-1 rounded select-all">{newKey}</span>
-                <p className="text-sm mt-1">Uložte si ho bezpečně. Znovu se již nezobrazí!</p>
-                <button onClick={() => setNewKey(null)} className="text-xs underline mt-2">Zavřít</button>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                    <Key className="h-5 w-5" />
+                    API Klíče
+                </CardTitle>
+                <CardDescription>
+                    Klíče pro autentizaci vašich požadavků na API.
+                </CardDescription>
             </div>
-        )}
+            <Button onClick={() => setIsKeyModalOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Generovat klíč
+            </Button>
+        </CardHeader>
+        <CardContent>
+            {newKey && (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-300 px-4 py-3 rounded-md mb-6 relative">
+                    <p className="font-bold mb-1">Váš nový API klíč:</p>
+                    <div className="flex items-center gap-2">
+                        <code className="bg-white dark:bg-black px-2 py-1 rounded border font-mono text-sm flex-1 break-all">
+                            {newKey}
+                        </code>
+                        <Button variant="ghost" size="icon" onClick={() => copyToClipboard(newKey)} className="h-8 w-8">
+                            <Copy className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <p className="text-xs mt-2 opacity-90">
+                        Uložte si ho bezpečně. Znovu se již nezobrazí!
+                    </p>
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setNewKey(null)} 
+                        className="absolute top-2 right-2 h-6 w-6 p-0 hover:bg-green-100 dark:hover:bg-green-800"
+                    >
+                        <span className="sr-only">Zavřít</span>
+                        ×
+                    </Button>
+                </div>
+            )}
 
-        <table className="w-full text-left">
-            <thead>
-                <tr className="border-b dark:border-gray-700">
-                    <th className="py-2">Název</th>
-                    <th className="py-2">Prefix</th>
-                    <th className="py-2">Vytvořeno</th>
-                    <th className="py-2">Naposledy použito</th>
-                    <th className="py-2">Akce</th>
-                </tr>
-            </thead>
-            <tbody>
-                {keys.map(key => (
-                    <tr key={key.id} className="border-b dark:border-gray-700">
-                        <td className="py-2">{key.name}</td>
-                        <td className="py-2 font-mono text-sm">{key.keyPrefix}...</td>
-                        <td className="py-2 text-sm text-gray-500">{new Date(key.createdAt).toLocaleDateString()}</td>
-                        <td className="py-2 text-sm text-gray-500">
-                            {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : '-'}
-                        </td>
-                        <td className="py-2">
-                            <button onClick={() => deleteKey(key.id)} className="text-red-500 hover:text-red-700 text-sm">Smazat</button>
-                        </td>
-                    </tr>
-                ))}
-                {keys.length === 0 && (
-                    <tr><td colSpan={5} className="py-4 text-center text-gray-500">Žádné API klíče</td></tr>
-                )}
-            </tbody>
-        </table>
-      </div>
+            {keys.length > 0 ? (
+                <div className="rounded-md border">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-muted/50">
+                            <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Název</th>
+                                <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Prefix</th>
+                                <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Vytvořeno</th>
+                                <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Naposledy použito</th>
+                                <th className="h-12 px-4 align-middle font-medium text-muted-foreground text-right">Akce</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {keys.map(key => (
+                                <tr key={key.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                    <td className="p-4 align-middle font-medium">{key.name}</td>
+                                    <td className="p-4 align-middle font-mono text-xs">{key.keyPrefix}...</td>
+                                    <td className="p-4 align-middle text-muted-foreground">{new Date(key.createdAt).toLocaleDateString()}</td>
+                                    <td className="p-4 align-middle text-muted-foreground">
+                                        {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : '-'}
+                                    </td>
+                                    <td className="p-4 align-middle text-right">
+                                        <ConfirmDialog
+                                            trigger={
+                                                <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            }
+                                            title="Smazat API klíč?"
+                                            description={`Opravdu chcete smazat klíč "${key.name}"? Aplikace používající tento klíč přestanou fungovat.`}
+                                            onConfirm={() => handleDeleteKey(key.id)}
+                                            variant="destructive"
+                                            actionLabel="Smazat"
+                                        />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                <EmptyState
+                    icon={Key}
+                    title="Žádné API klíče"
+                    description="Vytvořte si API klíč pro přístup k vašim datům z externích aplikací."
+                    action={{
+                        label: "Generovat klíč",
+                        onClick: () => setIsKeyModalOpen(true)
+                    }}
+                />
+            )}
+        </CardContent>
+      </Card>
 
       {/* Webhooks Section */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded shadow">
-        <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Webhooky</h2>
-            <button onClick={createWebhook} className="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700">
-                + Přidat Endpoint
-            </button>
-        </div>
-        <p className="text-sm text-gray-500 mb-4">
-            Nastavte URL adresy, kam budeme posílat notifikace o událostech (např. invoice.paid).
-        </p>
-
-        <ul className="space-y-2">
-            {webhooks.map(wh => (
-                <li key={wh.id} className="border p-3 rounded flex justify-between items-center">
-                    <div>
-                        <div className="font-mono text-sm">{wh.url}</div>
-                        <div className="text-xs text-gray-500 mt-1">Events: {wh.events.join(', ')}</div>
-                    </div>
-                    <span className={`text-xs px-2 py-1 rounded ${wh.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>
-                        {wh.isActive ? 'Aktivní' : 'Neaktivní'}
-                    </span>
-                </li>
-            ))}
-             {webhooks.length === 0 && (
-                <li className="text-center text-gray-500 py-4">Žádné webhooky nastaveny</li>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div>
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                    <Webhook className="h-5 w-5" />
+                    Webhooky
+                </CardTitle>
+                <CardDescription>
+                    Nastavte URL adresy, kam budeme posílat notifikace o událostech (např. invoice.paid).
+                </CardDescription>
+            </div>
+            <Button onClick={() => setIsWebhookModalOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Přidat Endpoint
+            </Button>
+        </CardHeader>
+        <CardContent>
+            {webhooks.length > 0 ? (
+                <ul className="space-y-3">
+                    {webhooks.map(wh => (
+                        <li key={wh.id} className="border rounded-lg p-4 flex justify-between items-center bg-card hover:bg-accent/5 transition-colors">
+                            <div className="space-y-1">
+                                <div className="font-mono text-sm bg-muted inline-block px-2 py-0.5 rounded border">
+                                    {wh.url}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                    Events: {wh.events.join(', ')}
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                    wh.isActive 
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+                                }`}>
+                                    {wh.isActive ? 'Aktivní' : 'Neaktivní'}
+                                </span>
+                                {/* Add delete functionality for webhooks later if API supports it */}
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <EmptyState
+                    icon={Webhook}
+                    title="Žádné webhooky"
+                    description="Zatím nemáte nastavené žádné webhooky pro notifikace."
+                    action={{
+                        label: "Přidat Endpoint",
+                        onClick: () => setIsWebhookModalOpen(true)
+                    }}
+                />
             )}
-        </ul>
-      </div>
+        </CardContent>
+      </Card>
+
+      {/* Modals */}
+      <Modal
+        isOpen={isKeyModalOpen}
+        onClose={() => setIsKeyModalOpen(false)}
+        title="Vytvořit nový API klíč"
+        description="Zadejte název pro identifikaci klíče (např. E-shop, Mobilní aplikace)."
+        footer={
+            <div className="flex justify-end gap-2 w-full">
+                <Button variant="outline" onClick={() => setIsKeyModalOpen(false)}>Zrušit</Button>
+                <Button onClick={handleCreateKey} disabled={loading}>
+                    {loading ? 'Vytváření...' : 'Vytvořit klíč'}
+                </Button>
+            </div>
+        }
+      >
+        <div className="space-y-4 py-4">
+            <div className="space-y-2">
+                <label htmlFor="keyName" className="text-sm font-medium">Název klíče</label>
+                <Input 
+                    id="keyName" 
+                    value={keyName} 
+                    onChange={(e) => setKeyName(e.target.value)} 
+                    placeholder="Např. Integrace E-shop"
+                    autoFocus
+                />
+            </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isWebhookModalOpen}
+        onClose={() => setIsWebhookModalOpen(false)}
+        title="Přidat Webhook Endpoint"
+        description="Zadejte URL adresu, na kterou budeme posílat POST požadavky při událostech."
+        footer={
+            <div className="flex justify-end gap-2 w-full">
+                <Button variant="outline" onClick={() => setIsWebhookModalOpen(false)}>Zrušit</Button>
+                <Button onClick={handleCreateWebhook}>
+                    Uložit webhook
+                </Button>
+            </div>
+        }
+      >
+        <div className="space-y-4 py-4">
+            <div className="space-y-2">
+                <label htmlFor="webhookUrl" className="text-sm font-medium">Webhook URL</label>
+                <Input 
+                    id="webhookUrl" 
+                    value={webhookUrl} 
+                    onChange={(e) => setWebhookUrl(e.target.value)} 
+                    placeholder="https://api.example.com/webhooks/vulpi"
+                    autoFocus
+                />
+            </div>
+        </div>
+      </Modal>
     </div>
   );
 }

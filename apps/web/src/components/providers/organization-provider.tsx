@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useAuth } from '@/features/auth/auth-provider';
 
 type Organization = {
   id: string;
@@ -24,14 +25,16 @@ type OrganizationContextType = {
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
 
 export function OrganizationProvider({ children }: { children: ReactNode }) {
+  const { user, isLoading: authLoading, fetchWithAuth } = useAuth();
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshOrganizations = async () => {
+    if (!user) return;
     try {
       setIsLoading(true);
-      const res = await fetch('/api/organizations');
+      const res = await fetchWithAuth('/api/organizations');
       if (res.ok) {
         const data = await res.json();
         setOrganizations(data);
@@ -42,9 +45,6 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
              // For now just pick first if none selected
              if (!currentOrg) setCurrentOrg(data[0]);
         }
-      } else if (res.status === 401) {
-          // Handled by middleware mostly, but if we are here, maybe token expired
-          // window.location.href = '/auth/login'; 
       }
     } catch (error) {
       console.error('Failed to fetch organizations:', error);
@@ -54,8 +54,16 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    refreshOrganizations();
-  }, []);
+    if (!authLoading) {
+        if (user) {
+            refreshOrganizations();
+        } else {
+            setOrganizations([]);
+            setCurrentOrg(null);
+            setIsLoading(false);
+        }
+    }
+  }, [authLoading, user]);
 
   return (
     <OrganizationContext.Provider value={{ currentOrg, organizations, setCurrentOrg, refreshOrganizations, isLoading }}>

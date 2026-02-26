@@ -25,7 +25,7 @@ export default function PublicInvoicePage() {
   }, [token]);
 
   const handlePayment = async () => {
-      alert('Přesměrování na platební bránu (Stripe Mock)...');
+      toast.info('Přesměrování na platební bránu (Stripe Mock)...');
       // In real app: window.location.href = res.paymentUrl
   };
 
@@ -67,26 +67,25 @@ export default function PublicInvoicePage() {
 
           {/* Actions */}
           <div className="p-6 border-b flex gap-4 bg-gray-50 dark:bg-gray-700">
-              <button 
+              <Button 
                   onClick={handlePayment}
-                  className="bg-green-600 text-white px-6 py-2 rounded shadow hover:bg-green-700 font-bold flex-1"
+                  className="bg-green-600 hover:bg-green-700 font-bold flex-1"
               >
+                  <CreditCard className="w-4 h-4 mr-2" />
                   Zaplatit kartou
-              </button>
-              <a 
-                  href={`/api/invoices/${invoice.id}/pdf`} 
-                  target="_blank"
-                  className="bg-white border border-gray-300 text-gray-700 px-6 py-2 rounded shadow-sm hover:bg-gray-50 flex-1 text-center"
-              >
-                  Stáhnout PDF
-              </a>
-              <a 
-                  href={`/api/invoices/${invoice.id}/isdoc`} 
-                  target="_blank"
-                  className="bg-white border border-gray-300 text-gray-700 px-6 py-2 rounded shadow-sm hover:bg-gray-50 flex-1 text-center"
-              >
-                  Stáhnout ISDOC
-              </a>
+              </Button>
+              <Button variant="outline" className="flex-1" asChild>
+                  <a href={`/api/invoices/${invoice.id}/pdf`} target="_blank">
+                      <Download className="w-4 h-4 mr-2" />
+                      Stáhnout PDF
+                  </a>
+              </Button>
+              <Button variant="outline" className="flex-1" asChild>
+                  <a href={`/api/invoices/${invoice.id}/isdoc`} target="_blank">
+                      <Download className="w-4 h-4 mr-2" />
+                      Stáhnout ISDOC
+                  </a>
+              </Button>
           </div>
 
           {/* Details */}
@@ -111,26 +110,28 @@ export default function PublicInvoicePage() {
                   </div>
               </div>
 
-              <table className="w-full mb-8">
-                  <thead>
-                      <tr className="border-b text-sm text-gray-500">
-                          <th className="text-left py-2">Položka</th>
-                          <th className="text-right py-2">Množství</th>
-                          <th className="text-right py-2">Cena</th>
-                          <th className="text-right py-2">Celkem</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-                      {invoice.items.map((item: any) => (
-                          <tr key={item.id} className="border-b">
-                              <td className="py-2">{item.description}</td>
-                              <td className="text-right py-2">{item.quantity} {item.unit}</td>
-                              <td className="text-right py-2">{Number(item.unitPrice).toFixed(2)}</td>
-                              <td className="text-right py-2 font-medium">{Number(item.totalPrice).toFixed(2)}</td>
-                          </tr>
-                      ))}
-                  </tbody>
-              </table>
+              <div className="rounded-md border mb-8">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Položka</TableHead>
+                            <TableHead className="text-right">Množství</TableHead>
+                            <TableHead className="text-right">Cena</TableHead>
+                            <TableHead className="text-right">Celkem</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {invoice.items.map((item: any) => (
+                            <TableRow key={item.id}>
+                                <TableCell>{item.description}</TableCell>
+                                <TableCell className="text-right">{item.quantity} {item.unit}</TableCell>
+                                <TableCell className="text-right">{Number(item.unitPrice).toFixed(2)}</TableCell>
+                                <TableCell className="text-right font-medium">{Number(item.totalPrice).toFixed(2)}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+              </div>
           </div>
 
           {/* Comments Section */}

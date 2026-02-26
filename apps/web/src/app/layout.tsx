@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   description: "SaaS fakturační systém",
 };
 
+import { Toaster } from 'sonner';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -35,6 +37,7 @@ export default function RootLayout({
             <LayoutWrapper>
               {children}
             </LayoutWrapper>
+            <Toaster richColors position="bottom-right" />
           </OrganizationProvider>
         </AuthProvider>
       </body>

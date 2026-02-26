@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,6 +7,8 @@ import { useCreateInvoice } from '@/features/invoices/hooks/use-create-invoice';
 import { InvoiceFormHeader } from '@/features/invoices/components/invoice-form-header';
 import { InvoiceItemsTable } from '@/features/invoices/components/invoice-items-table';
 import { InvoiceItem } from '@/features/invoices/types';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
 export default function NewInvoicePage() {
   const router = useRouter();
@@ -37,7 +38,7 @@ export default function NewInvoicePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentOrg) return alert('Vyberte organizaci');
+    if (!currentOrg) return;
 
     try {
       await create({
@@ -56,11 +57,10 @@ export default function NewInvoicePage() {
           exchangeRate: 1
       });
       
-      // We don't have the ID here because useCreateInvoice returns void or we need to update it
-      // Let's assume for now we redirect to list or just back
       router.back(); 
     } catch (err: any) {
-      alert(err.message);
+      // Error handled in hook via toast
+      console.error(err);
     }
   };
 
@@ -79,14 +79,20 @@ export default function NewInvoicePage() {
         <InvoiceItemsTable items={items} setItems={setItems} />
 
         <div className="flex justify-end gap-4">
-            <button type="button" onClick={() => router.back()} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded">Zrušit</button>
-            <button 
+            <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => router.back()}
+            >
+                Zrušit
+            </Button>
+            <Button 
                 type="submit" 
                 disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
             >
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {loading ? 'Ukládám...' : 'Vytvořit fakturu'}
-            </button>
+            </Button>
         </div>
       </form>
     </div>

@@ -1,5 +1,11 @@
+'use client';
 
 import { InvoiceItem } from '../types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Plus, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function InvoiceItemsTable({ items, setItems }: { items: InvoiceItem[], setItems: (items: InvoiceItem[]) => void }) {
     const addItem = () => {
@@ -25,71 +31,108 @@ export function InvoiceItemsTable({ items, setItems }: { items: InvoiceItem[], s
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded shadow">
-            <h2 className="font-semibold mb-4">Položky</h2>
-            <div className="space-y-2">
-                {items.map((item, idx) => (
-                    <div key={idx} className="flex gap-2 items-start">
-                        <div className="flex-1">
-                            <input 
-                                placeholder="Popis položky"
-                                value={item.description}
-                                onChange={e => updateItem(idx, 'description', e.target.value)}
-                                className="w-full border rounded p-2 bg-transparent"
-                                required
-                            />
-                        </div>
-                        <div className="w-20">
-                            <input 
-                                type="number"
-                                placeholder="Mn."
-                                value={item.quantity}
-                                onChange={e => updateItem(idx, 'quantity', e.target.value)}
-                                className="w-full border rounded p-2 bg-transparent"
-                                min="0"
-                            />
-                        </div>
-                        <div className="w-20">
-                            <input 
-                                placeholder="Jedn."
-                                value={item.unit}
-                                onChange={e => updateItem(idx, 'unit', e.target.value)}
-                                className="w-full border rounded p-2 bg-transparent"
-                            />
-                        </div>
-                        <div className="w-24">
-                            <input 
-                                type="number"
-                                placeholder="Cena"
-                                value={item.unitPrice}
-                                onChange={e => updateItem(idx, 'unitPrice', e.target.value)}
-                                className="w-full border rounded p-2 bg-transparent"
-                                min="0"
-                            />
-                        </div>
-                        <div className="w-20">
-                            <select 
-                                value={item.vatRate}
-                                onChange={e => updateItem(idx, 'vatRate', e.target.value)}
-                                className="w-full border rounded p-2 bg-transparent"
-                            >
-                                <option value="21">21%</option>
-                                <option value="12">12%</option>
-                                <option value="0">0%</option>
-                            </select>
-                        </div>
-                        <button type="button" onClick={() => removeItem(idx)} className="p-2 text-red-500 hover:text-red-700">×</button>
+        <Card className="mb-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-lg font-medium">Položky faktury</CardTitle>
+                <Button onClick={addItem} type="button" variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Přidat položku
+                </Button>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                    <div className="hidden md:flex gap-4 text-sm font-medium text-muted-foreground mb-2 px-1">
+                        <div className="flex-1">Popis</div>
+                        <div className="w-20">Množství</div>
+                        <div className="w-24">Jednotka</div>
+                        <div className="w-32">Cena/jedn.</div>
+                        <div className="w-24">DPH</div>
+                        <div className="w-10"></div>
                     </div>
-                ))}
-            </div>
-            <button type="button" onClick={addItem} className="mt-4 text-blue-600 hover:underline text-sm">+ Přidat položku</button>
-            
-            <div className="mt-8 border-t pt-4 flex justify-end">
-                <div className="text-right">
-                    <div className="text-sm text-gray-500">Celkem s DPH</div>
-                    <div className="text-2xl font-bold">{calculateTotal().toFixed(2)} CZK</div>
+                    
+                    {items.map((item, idx) => (
+                        <div key={idx} className="flex flex-col md:flex-row gap-4 items-start bg-muted/50 p-3 md:p-0 rounded md:bg-transparent">
+                            <div className="flex-1 w-full space-y-1">
+                                <label className="md:hidden text-xs font-medium text-muted-foreground">Popis</label>
+                                <Input 
+                                    placeholder="Popis položky"
+                                    value={item.description}
+                                    onChange={e => updateItem(idx, 'description', e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="flex gap-4 w-full md:w-auto">
+                                <div className="w-1/2 md:w-20 space-y-1">
+                                    <label className="md:hidden text-xs font-medium text-muted-foreground">Množství</label>
+                                    <Input 
+                                        type="number"
+                                        placeholder="Mn."
+                                        value={item.quantity}
+                                        onChange={e => updateItem(idx, 'quantity', Number(e.target.value))}
+                                        min="0"
+                                    />
+                                </div>
+                                <div className="w-1/2 md:w-24 space-y-1">
+                                    <label className="md:hidden text-xs font-medium text-muted-foreground">Jednotka</label>
+                                    <Input 
+                                        placeholder="Jedn."
+                                        value={item.unit}
+                                        onChange={e => updateItem(idx, 'unit', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-4 w-full md:w-auto">
+                                 <div className="w-1/2 md:w-32 space-y-1">
+                                    <label className="md:hidden text-xs font-medium text-muted-foreground">Cena/j.</label>
+                                    <Input 
+                                        type="number"
+                                        placeholder="Cena/j."
+                                        value={item.unitPrice}
+                                        onChange={e => updateItem(idx, 'unitPrice', Number(e.target.value))}
+                                        min="0"
+                                    />
+                                </div>
+                                <div className="w-1/2 md:w-24 space-y-1">
+                                    <label className="md:hidden text-xs font-medium text-muted-foreground">DPH</label>
+                                    <select 
+                                        value={item.vatRate}
+                                        onChange={e => updateItem(idx, 'vatRate', Number(e.target.value))}
+                                        className={cn(
+                                            "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                        )}
+                                    >
+                                        <option value={21}>21%</option>
+                                        <option value={15}>15%</option>
+                                        <option value={12}>12%</option>
+                                        <option value={0}>0%</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div className="flex justify-end w-full md:w-auto mt-2 md:mt-0 pt-1">
+                                <Button 
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeItem(idx)}
+                                    className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                    ))}
+
+                    <div className="flex justify-end pt-4 border-t">
+                         <div className="text-right">
+                             <div className="text-sm text-muted-foreground">Celkem s DPH</div>
+                             <div className="text-2xl font-bold">
+                                 {new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'CZK' }).format(calculateTotal())}
+                             </div>
+                         </div>
+                    </div>
                 </div>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }

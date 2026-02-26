@@ -1,26 +1,41 @@
 
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
+
 export function StockTable({ stocks }: { stocks: any[] }) {
     return (
-        <table className="w-full text-sm text-left">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                    <th className="p-2">Produkt</th>
-                    <th className="p-2 text-right">Množství</th>
-                    <th className="p-2 text-right">Rezervováno</th>
-                    <th className="p-2 text-right">Dostupné</th>
-                </tr>
-            </thead>
-            <tbody>
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Produkt</TableHead>
+                    <TableHead className="text-right">Množství</TableHead>
+                    <TableHead className="text-right">Rezervováno</TableHead>
+                    <TableHead className="text-right">Dostupné</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
                 {stocks.map((stock: any) => (
-                    <tr key={stock.id} className="border-b">
-                        <td className="p-2">{stock.product.name}</td>
-                        <td className="p-2 text-right font-bold">{stock.quantity}</td>
-                        <td className="p-2 text-right text-orange-500">{stock.reserved}</td>
-                        <td className="p-2 text-right text-green-600">{stock.quantity - stock.reserved}</td>
-                    </tr>
+                    <TableRow key={stock.id}>
+                        <TableCell className="font-medium">{stock.product.name}</TableCell>
+                        <TableCell className="text-right font-bold">{stock.quantity}</TableCell>
+                        <TableCell className="text-right text-orange-500">{stock.reserved}</TableCell>
+                        <TableCell className="text-right text-green-600">{stock.quantity - stock.reserved}</TableCell>
+                    </TableRow>
                 ))}
-                {stocks.length === 0 && <tr><td colSpan={4} className="p-4 text-center text-gray-500">Sklad je prázdný.</td></tr>}
-            </tbody>
-        </table>
+                {stocks.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                            Sklad je prázdný.
+                        </TableCell>
+                    </TableRow>
+                )}
+            </TableBody>
+        </Table>
     );
 }

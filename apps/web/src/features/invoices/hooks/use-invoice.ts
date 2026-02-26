@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/features/auth/auth-provider';
 import { getInvoice } from '../api/get-invoice';
 
 export function useInvoice(id: string | undefined) {
+  const { fetchWithAuth } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -9,12 +11,12 @@ export function useInvoice(id: string | undefined) {
   useEffect(() => {
     if (id) {
       setLoading(true);
-      getInvoice(id)
+      getInvoice(id, fetchWithAuth)
         .then(setData)
         .catch(setError)
         .finally(() => setLoading(false));
     }
-  }, [id]);
+  }, [id, fetchWithAuth]);
 
   return { data, loading, error, mutate: setData };
 }

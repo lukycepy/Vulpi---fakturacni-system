@@ -1,96 +1,156 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import IsdsWidget from '@/features/invoices/components/isds-widget';
 import { useInvoice } from '@/features/invoices/hooks/use-invoice';
 import { useSendInvoice } from '@/features/invoices/hooks/use-send-invoice';
+import { useDeleteInvoice } from '@/features/invoices/hooks/use-delete-invoice';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { toast } from 'sonner';
+import { Loader2, Download, Send, Globe, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function InvoiceDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const id = params.id as string;
   
   const { data: invoice, loading, mutate } = useInvoice(id);
   const { send, sending } = useSendInvoice();
+  const { deleteInvoice, deleting } = useDeleteInvoice();
   
   const [lang, setLang] = useState(searchParams.get('lang') || 'cs');
 
-  const sendEmail = async () => {
+  const handleSendEmail = async () => {
     if (!invoice) return;
-    if (!confirm(`Opravdu chcete odeslat fakturu na ${invoice.client?.email}?`)) return;
 
     try {
         await send(invoice.id);
-        alert('Faktura byla úspěšně odeslána.');
+        toast.success('Faktura byla úspěšně odeslána.');
         // Refresh invoice status
         mutate({ ...invoice, status: 'sent' });
     } catch (err: any) {
-        alert(err.message);
+        toast.error(err.message || 'Chyba při odesílání faktury');
     }
   };
 
-  if (loading) return <div className="p-8">Načítání...</div>;
-  if (!invoice) return <div className="p-8">Faktura nenalezena</div>;
+  const handleDelete = async () => {
+      if (!invoice) return;
+      try {
+          await deleteInvoice(invoice.id);
+          router.push('/invoices');
+      } catch (error) {
+          // Error handled in hook
+      }
+  };
+
+  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin h-8 w-8 text-gray-400" /></div>;
+  if (!invoice) return <div className="p-8 text-center text-red-500">Faktura nenalezena</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Faktura {invoice.invoiceNumber}</h1>
-          <span className={`inline-block px-2 py-1 text-xs rounded mt-2 ${
-            invoice.status === 'draft' ? 'bg-gray-200 text-gray-800' : 
-            invoice.status === 'sent' ? 'bg-blue-100 text-blue-800' :
-            invoice.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-          }`}>
-            {invoice.status}
-          </span>
-        </div>
-        <div className="flex gap-3 items-center">
-            <select 
-                value={lang} 
-                onChange={(e) => setLang(e.target.value)}
-                className="border rounded px-2 py-2 text-sm"
-            >
-                <option value="cs">Čeština</option>
-                <option value="en">English</option>
-                <option value="de">Deutsch</option>
-            </select>
-            <Link 
-              href={`/api/invoices/${invoice.id}/pdf?lang=${lang}`} 
-              target="_blank"
-              className="px-4 py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-50"
-            >
-              Stáhnout PDF
-            </Link>
-            <button 
-                onClick={sendEmail}
-                disabled={sending}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-            >
-              {sending ? 'Odesílám...' : 'Odeslat klientovi'}
-            </button>
+          <h1 className="text-2xl font-bold flex items-center gap-3">
+              Faktura {invoice.invoiceNumber}
+              <Badge variant={
+                invoice.status === 'draft' ? 'secondary' : 
+                invoice.status === 'sent' ? 'default' :
+                invoice.status === 'paid' ? 'success' : 'destructive'
+              }>
+                {invoice.status === 'draft' ? 'Návrh' : 
+                 invoice.status === 'sent' ? 'Odesláno' :
+                 invoice.status === 'paid' ? 'Zaplaceno' : 'Po splatnosti'}
+              </Badge>
+          </h1>
         </div>
         
-        {/* ISDS Widget */}
-        <div className="mt-4 bg-white dark:bg-gray-800 p-4 rounded shadow mb-4">
-             <h3 className="text-sm font-bold mb-2">Komunikace se státem (ISDS)</h3>
-             <IsdsWidget invoice={invoice} />
+        <div className="flex flex-wrap gap-3 items-center">
+            <div className="relative">
+                <Globe className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+                <select 
+                    value={lang} 
+                    onChange={(e) => setLang(e.target.value)}
+                    className={cn(
+                        "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-8 w-[130px]"
+                    )}
+                >
+                    <option value="cs">Čeština</option>
+                    <option value="en">English</option>
+                    <option value="de">Deutsch</option>
+                </select>
+            </div>
+            
+            <Button asChild variant="outline">
+                <Link 
+                  href={`/api/invoices/${invoice.id}/pdf?lang=${lang}`} 
+                  target="_blank"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Stáhnout PDF
+                </Link>
+            </Button>
+            
+            <ConfirmDialog
+                trigger={
+                    <Button 
+                        disabled={sending}
+                        variant="blue"
+                    >
+                        {sending ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Send className="mr-2 h-4 w-4" />}
+                        {sending ? 'Odesílám...' : 'Odeslat klientovi'}
+                    </Button>
+                }
+                title="Odeslat fakturu?"
+                description={`Opravdu chcete odeslat fakturu na ${invoice.client?.email}?`}
+                onConfirm={handleSendEmail}
+                actionLabel="Odeslat"
+            />
+
+            <ConfirmDialog
+                trigger={
+                    <Button variant="destructive" disabled={deleting}>
+                        {deleting ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                        Smazat
+                    </Button>
+                }
+                title="Smazat fakturu?"
+                description="Tato akce je nevratná. Opravdu chcete smazat tuto fakturu?"
+                onConfirm={handleDelete}
+                variant="destructive"
+                actionLabel="Smazat"
+            />
         </div>
-
       </div>
+        
+      {/* ISDS Widget */}
+      <Card className="mb-6">
+             <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold flex items-center gap-2">
+                    <span>🏛️</span> Komunikace se státem (ISDS)
+                </CardTitle>
+             </CardHeader>
+             <CardContent>
+                <IsdsWidget invoice={invoice} />
+             </CardContent>
+      </Card>
 
-      <div className="bg-white dark:bg-gray-800 rounded shadow overflow-hidden">
+      <Card className="overflow-hidden shadow-lg">
         {/* Preview Frame */}
-        <div className="aspect-[1/1.4] w-full bg-gray-100 flex items-center justify-center">
+        <div className="aspect-[1/1.4] w-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
             <iframe 
                 src={`/api/invoices/${invoice.id}/pdf?lang=${lang}`} 
                 className="w-full h-full"
                 title="PDF Preview"
             />
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

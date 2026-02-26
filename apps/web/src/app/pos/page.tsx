@@ -2,6 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useOrganization } from '@/components/providers/organization-provider';
+import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { ShoppingCart, CreditCard, Banknote, Search, X, Plus, Package } from "lucide-react";
 
 export default function PosPage() {
   const { currentOrg } = useOrganization();
@@ -48,7 +55,7 @@ export default function PosPage() {
 
   const checkout = async (method: 'CASH' | 'CARD') => {
       if (!selectedDesk || !selectedWarehouse) {
-          alert('Vyberte pokladnu a sklad!');
+          toast.error('Vyberte pokladnu a sklad!');
           return;
       }
       
@@ -66,21 +73,23 @@ export default function PosPage() {
 
       if (res.ok) {
           const receipt = await res.json();
-          alert(`Zaplaceno! Účtenka: ${receipt.invoiceNumber}`);
+          toast.success(`Zaplaceno! Účtenka: ${receipt.invoiceNumber}`);
           setCart([]);
           // Print Logic (window.print() or specialized library)
       } else {
-          alert('Chyba při platbě.');
+          toast.error('Chyba při platbě.');
       }
   };
 
   return (
-    <div className="h-screen flex flex-col md:flex-row bg-gray-100 dark:bg-gray-900">
+    <div className="h-screen flex flex-col md:flex-row bg-background overflow-hidden">
       {/* Left: Product Search & Grid */}
-      <div className="flex-1 p-6 flex flex-col">
-          <div className="mb-4 flex gap-4">
+      <div className="flex-1 p-6 flex flex-col gap-6 overflow-hidden">
+          <div className="grid grid-cols-2 gap-4">
               <select 
-                  className="border p-2 rounded"
+                  className={cn(
+                    "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  )}
                   value={selectedDesk}
                   onChange={e => setSelectedDesk(e.target.value)}
               >
@@ -88,7 +97,9 @@ export default function PosPage() {
                   {cashDesks.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
               <select 
-                  className="border p-2 rounded"
+                  className={cn(
+                    "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  )}
                   value={selectedWarehouse}
                   onChange={e => setSelectedWarehouse(e.target.value)}
               >
@@ -97,74 +108,122 @@ export default function PosPage() {
               </select>
           </div>
 
-          <input 
-              autoFocus
-              placeholder="Hledat produkt (Název, EAN)..."
-              className="w-full p-4 text-xl border rounded shadow mb-4"
-              value={query}
-              onChange={e => search(e.target.value)}
-          />
+          <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input 
+                  autoFocus
+                  placeholder="Hledat produkt (Název, EAN)..."
+                  className="pl-9 h-12 text-lg shadow-sm"
+                  value={query}
+                  onChange={e => search(e.target.value)}
+              />
+          </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto pr-2 pb-4">
               {products.map(p => (
-                  <div 
+                  <Card 
                       key={p.id} 
                       onClick={() => addToCart(p)}
-                      className="bg-white dark:bg-gray-800 p-4 rounded shadow cursor-pointer hover:bg-blue-50 active:scale-95 transition"
+                      className="cursor-pointer hover:bg-accent/50 hover:shadow-md transition-all active:scale-95 group"
                   >
-                      <div className="font-bold text-lg mb-1">{p.name}</div>
-                      <div className="text-gray-500 text-sm mb-2">{p.ean}</div>
-                      <div className="font-bold text-blue-600">{Number(p.unitPrice).toFixed(0)} CZK</div>
-                  </div>
+                      <CardContent className="p-4 flex flex-col h-full justify-between gap-2">
+                          <div>
+                              <div className="font-semibold text-lg leading-tight group-hover:text-primary transition-colors">{p.name}</div>
+                              <div className="text-muted-foreground text-xs mt-1 font-mono">{p.ean}</div>
+                          </div>
+                          <div className="font-bold text-xl text-primary">{Number(p.unitPrice).toFixed(0)} Kč</div>
+                      </CardContent>
+                  </Card>
               ))}
+              {products.length === 0 && query.length > 2 && (
+                  <div className="col-span-full flex flex-col items-center justify-center p-8 text-muted-foreground opacity-50">
+                      <Package className="h-12 w-12 mb-2" />
+                      <p>Žádné produkty nenalezeny</p>
+                  </div>
+              )}
           </div>
       </div>
 
       {/* Right: Cart & Checkout */}
-      <div className="w-full md:w-96 bg-white dark:bg-gray-800 shadow-xl flex flex-col border-l">
-          <div className="p-6 bg-blue-600 text-white">
-              <h2 className="text-2xl font-bold">Košík</h2>
+      <div className="w-full md:w-96 bg-card shadow-2xl flex flex-col border-l z-10 h-full">
+          <div className="p-6 bg-primary text-primary-foreground shadow-md">
+              <div className="flex items-center gap-3 mb-1">
+                  <ShoppingCart className="h-6 w-6 opacity-80" />
+                  <h2 className="text-2xl font-bold tracking-tight">Košík</h2>
+              </div>
+              <p className="text-primary-foreground/70 text-sm">
+                  {cart.length} {cart.length === 1 ? 'položka' : (cart.length >= 2 && cart.length <= 4) ? 'položky' : 'položek'}
+              </p>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {cart.map(item => (
-                  <div key={item.productId} className="flex justify-between items-center border-b pb-2">
-                      <div>
-                          <div className="font-bold">{item.name}</div>
-                          <div className="text-sm text-gray-500">
-                              {item.quantity} x {item.price} CZK
+                  <div key={item.productId} className="flex justify-between items-center p-3 rounded-lg bg-muted/50 border border-transparent hover:border-border transition-colors group">
+                      <div className="flex-1 min-w-0 mr-3">
+                          <div className="font-medium truncate" title={item.name}>{item.name}</div>
+                          <div className="text-xs text-muted-foreground font-mono mt-0.5">
+                              {item.quantity} x {item.price} Kč
                           </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                          <div className="font-bold">{(item.quantity * item.price).toFixed(0)}</div>
-                          <button onClick={() => removeFromCart(item.productId)} className="text-red-500 font-bold">×</button>
+                      <div className="flex items-center gap-3">
+                          <div className="font-bold font-mono">{(item.quantity * item.price).toFixed(0)}</div>
+                          <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 -mr-2"
+                              onClick={() => removeFromCart(item.productId)}
+                          >
+                              <X className="h-4 w-4" />
+                          </Button>
                       </div>
                   </div>
               ))}
-              {cart.length === 0 && <div className="text-center text-gray-400 mt-10">Košík je prázdný</div>}
+              {cart.length === 0 && (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground/40 space-y-4">
+                      <ShoppingCart className="h-16 w-16" />
+                      <p className="text-sm">Košík je prázdný</p>
+                  </div>
+              )}
           </div>
 
-          <div className="p-6 bg-gray-50 dark:bg-gray-700 border-t">
-              <div className="flex justify-between text-2xl font-bold mb-6">
-                  <span>Celkem:</span>
-                  <span>{total.toFixed(0)} CZK</span>
+          <div className="p-6 bg-muted/30 border-t space-y-6 backdrop-blur-sm">
+              <div className="flex justify-between items-baseline">
+                  <span className="text-muted-foreground font-medium">Celkem k úhradě</span>
+                  <span className="text-3xl font-bold tracking-tight">{total.toFixed(0)} Kč</span>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                  <button 
-                      onClick={() => checkout('CASH')}
-                      disabled={cart.length === 0}
-                      className="bg-green-600 text-white py-4 rounded font-bold text-lg hover:bg-green-700 disabled:opacity-50"
-                  >
-                      HOTOVOST
-                  </button>
-                  <button 
-                      onClick={() => checkout('CARD')}
-                      disabled={cart.length === 0}
-                      className="bg-blue-600 text-white py-4 rounded font-bold text-lg hover:bg-blue-700 disabled:opacity-50"
-                  >
-                      KARTA
-                  </button>
+              <div className="grid grid-cols-2 gap-3">
+                  <ConfirmDialog
+                      trigger={
+                        <Button 
+                            disabled={cart.length === 0}
+                            variant="outline"
+                            className="h-20 flex flex-col gap-1 border-primary/20 hover:bg-primary/5 hover:border-primary/50 text-base"
+                        >
+                            <Banknote className="h-6 w-6 text-green-600 dark:text-green-500" />
+                            <span>Hotovost</span>
+                        </Button>
+                      }
+                      title="Potvrdit platbu hotovostí?"
+                      description={`Opravdu chcete zaplatit ${total.toFixed(0)} Kč v hotovosti?`}
+                      onConfirm={() => checkout('CASH')}
+                      actionLabel="Zaplatit"
+                  />
+                  <ConfirmDialog
+                      trigger={
+                        <Button 
+                            disabled={cart.length === 0}
+                            className="h-20 flex flex-col gap-1 text-base"
+                        >
+                            <CreditCard className="h-6 w-6" />
+                            <span>Karta</span>
+                        </Button>
+                      }
+                      title="Potvrdit platbu kartou?"
+                      description={`Opravdu chcete zaplatit ${total.toFixed(0)} Kč kartou?`}
+                      onConfirm={() => checkout('CARD')}
+                      actionLabel="Zaplatit"
+                  />
               </div>
           </div>
       </div>

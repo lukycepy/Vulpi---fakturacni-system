@@ -4,172 +4,136 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useOrganization } from '../providers/organization-provider';
+import { cn } from '@/lib/utils';
+import { 
+    LayoutDashboard, 
+    FileText, 
+    Receipt, 
+    Wallet, 
+    BarChart3, 
+    Clock, 
+    Package, 
+    Users, 
+    ShoppingCart, 
+    Settings,
+    LogOut,
+    Building2,
+    ChevronRight
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { currentOrg } = useOrganization();
 
-  if (!user) return null; // Or render nothing if not logged in
+  if (!user) return null; 
 
   const isActive = (path: string) => pathname?.startsWith(path);
 
+  const NavItem = ({ href, children, icon: Icon }: { href: string; children: React.ReactNode; icon: any }) => {
+    const active = isActive(href);
+    return (
+        <Link
+        href={href}
+        className={cn(
+            "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
+            active
+            ? "bg-primary/10 text-primary hover:bg-primary/15" 
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        )}
+        >
+        <Icon className={cn("mr-3 h-4 w-4 transition-colors", active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
+        <span className="flex-1">{children}</span>
+        {active && <ChevronRight className="h-3 w-3 text-primary opacity-50" />}
+        </Link>
+    );
+  };
+
   const isAdmin = user.role === 'ADMIN';
   const isWorker = user.role === 'WORKER';
-  // Client portal usually has its own layout, but if they land here:
   const isClient = user.role === 'CLIENT';
 
   return (
-    <aside className="w-64 bg-gray-900 text-white min-h-screen flex flex-col fixed left-0 top-0 bottom-0 z-50">
-      <div className="p-4 border-b border-gray-800 flex items-center justify-between">
-        <span className="text-xl font-bold tracking-tight text-blue-400">Vulpi</span>
-        <span className="text-xs text-gray-500 uppercase">{user.role}</span>
+    <aside className="w-64 bg-card text-card-foreground min-h-screen flex flex-col fixed left-0 top-0 bottom-0 z-50 border-r shadow-sm">
+      <div className="p-4 h-16 border-b flex items-center justify-between bg-background/50 backdrop-blur-sm">
+        <div className="flex items-center gap-2">
+            <div className="bg-primary text-primary-foreground h-8 w-8 rounded-lg flex items-center justify-center font-bold text-lg shadow-sm">
+                V
+            </div>
+            <span className="text-xl font-bold tracking-tight text-foreground">Vulpi</span>
+        </div>
+        <span className="text-[10px] font-mono font-medium text-muted-foreground uppercase px-2 py-0.5 bg-muted rounded border border-border">
+            {user.role}
+        </span>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-4">
-        <nav className="space-y-1 px-2">
-          {/* Dashboard - Visible to all except maybe client */}
+      <div className="flex-1 overflow-y-auto py-4 px-3 custom-scrollbar">
+        <nav className="space-y-1">
+          {/* Dashboard */}
           {!isClient && (
-            <Link
-              href="/dashboard"
-              className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                isActive('/dashboard') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-              }`}
-            >
-              📊 Dashboard
-            </Link>
+            <NavItem href="/dashboard" icon={LayoutDashboard}>Dashboard</NavItem>
           )}
 
           {/* Admin Only Sections */}
           {isAdmin && (
             <>
-              <div className="mt-4 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <div className="mt-6 mb-2 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Building2 className="h-3 w-3" />
                 Finance
               </div>
-              <Link
-                href="/invoices"
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  isActive('/invoices') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
-              >
-                📄 Faktury
-              </Link>
-              <Link
-                href="/expenses"
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  isActive('/expenses') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
-              >
-                💸 Náklady
-              </Link>
-              <Link
-                href="/finance/cash"
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  isActive('/finance/cash') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
-              >
-                💰 Pokladna
-              </Link>
-              <Link
-                href="/reports"
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  isActive('/reports') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
-              >
-                📈 Reporty
-              </Link>
+              <NavItem href="/invoices" icon={FileText}>Faktury</NavItem>
+              <NavItem href="/expenses" icon={Receipt}>Náklady</NavItem>
+              <NavItem href="/finance/cash" icon={Wallet}>Pokladna</NavItem>
+              <NavItem href="/reports" icon={BarChart3}>Reporty</NavItem>
             </>
           )}
 
           {/* Worker & Admin Sections */}
           {(isAdmin || isWorker) && (
             <>
-              <div className="mt-4 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <div className="mt-6 mb-2 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Package className="h-3 w-3" />
                 Provoz
               </div>
-              <Link
-                href="/time-tracking"
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  isActive('/time-tracking') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
-              >
-                ⏱️ Výkazy práce
-              </Link>
-              <Link
-                href="/inventory"
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  isActive('/inventory') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
-              >
-                📦 Sklad
-              </Link>
-              {isAdmin && (
-                <>
-                  <Link
-                    href="/crm"
-                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                      isActive('/crm') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                    }`}
-                  >
-                    🤝 CRM
-                  </Link>
-                  <Link
-                    href="/hr"
-                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                      isActive('/hr') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                    }`}
-                  >
-                    👥 HR & Mzdy
-                  </Link>
-                </>
-              )}
+              <NavItem href="/time-tracking" icon={Clock}>Výkazy práce</NavItem>
+              <NavItem href="/inventory" icon={Package}>Sklad</NavItem>
+              <NavItem href="/crm" icon={Users}>Obchod (CRM)</NavItem>
+              <NavItem href="/sales" icon={ShoppingCart}>Prodej</NavItem>
             </>
           )}
 
-          {/* Settings - Admin Only */}
+          {/* Settings Group */}
           {isAdmin && (
             <>
-              <div className="mt-4 px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Systém
+              <div className="mt-6 mb-2 px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Settings className="h-3 w-3" />
+                Nastavení
               </div>
-              <Link
-                href="/settings"
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  isActive('/settings') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
-              >
-                ⚙️ Nastavení
-              </Link>
-              <Link
-                href="/admin/system-health"
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-                  isActive('/admin/system-health') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                }`}
-              >
-                ❤️ System Health
-              </Link>
+              <NavItem href="/settings" icon={Settings}>Nastavení</NavItem>
             </>
           )}
         </nav>
       </div>
-
-      {/* User Profile & Logout */}
-      <div className="border-t border-gray-800 p-4">
-        <div className="flex items-center mb-3">
-          <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold">
-            {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
-          </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-white truncate w-32">{user.name || 'Uživatel'}</p>
-            <p className="text-xs text-gray-400 truncate w-32">{user.email}</p>
-          </div>
+      
+      <div className="p-4 border-t bg-muted/20">
+        <div className="flex items-center gap-3 mb-4 px-2 p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer group">
+             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary border border-primary/20 group-hover:border-primary/50 transition-colors">
+                 {user.name?.charAt(0) || user.email.charAt(0).toUpperCase()}
+             </div>
+             <div className="overflow-hidden">
+                 <div className="text-sm font-medium truncate text-foreground group-hover:text-primary transition-colors">{user.name || 'Uživatel'}</div>
+                 <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+             </div>
         </div>
-        <button
-          onClick={logout}
-          className="w-full flex items-center justify-center px-4 py-2 text-sm font-medium text-red-400 bg-gray-800 hover:bg-gray-700 rounded-md transition-colors"
+        <Button 
+            variant="ghost" 
+            className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            onClick={logout}
         >
-          🚪 Odhlásit se
-        </button>
+            <LogOut className="mr-2 h-4 w-4" />
+            Odhlásit se
+        </Button>
       </div>
     </aside>
   );

@@ -1,7 +1,8 @@
-export async function getCashflow(organizationId: string) {
-  const res = await fetch(`/api/expenses/cashflow?organizationId=${organizationId}`);
+export async function getCashflow(organizationId: string, fetcher: (url: string, init?: RequestInit) => Promise<Response> = fetch) {
+  const res = await fetcher(`/api/expenses/cashflow?organizationId=${organizationId}`);
   if (!res.ok) {
-    throw new Error('Failed to fetch cashflow data');
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to fetch cashflow data');
   }
   return res.json();
 }

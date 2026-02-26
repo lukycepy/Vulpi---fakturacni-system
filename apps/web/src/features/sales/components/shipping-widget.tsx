@@ -1,8 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/features/auth/auth-provider';
+import { toast } from 'sonner';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Loader2, Package, Download, ExternalLink } from 'lucide-react';
 
 export default function ShippingWidget({ order }: { order: any }) {
+  const { fetchWithAuth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [tracking, setTracking] = useState(order.trackingNumber);
   const [labelUrl, setLabelUrl] = useState(order.shippingLabelUrl);
@@ -10,49 +16,73 @@ export default function ShippingWidget({ order }: { order: any }) {
   const createLabel = async () => {
     setLoading(true);
     try {
-        const res = await fetch('/api/shipping/create-label', {
+        const res = await fetchWithAuth('/api/shipping/create-label', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderId: order.id })
         });
+        
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.message || 'Failed to create label');
+        }
+
         const data = await res.json();
         setTracking(data.trackingNumber);
         setLabelUrl(data.labelUrl);
-    } catch (e) {
-        alert('Chyba při vytváření štítku');
+        toast.success('Štítek byl úspěšně vytvořen');
+    } catch (e: any) {
+        toast.error('Chyba při vytváření štítku: ' + (e.message || 'Neznámá chyba'));
     } finally {
         setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded shadow mt-6">
-        <h3 className="text-lg font-bold mb-4">Logistika</h3>
-        
-        {tracking ? (
-            <div>
-                <div className="mb-2">
-                    <span className="text-gray-500">Zásilkovna: </span>
-                    <span className="font-mono font-bold">{tracking}</span>
+    <Card className="mt-6">
+        <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Logistika
+            </CardTitle>
+        </CardHeader>
+        <CardContent>
+            {tracking ? (
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-muted rounded-md">
+                        <span className="text-sm text-muted-foreground">Zásilkovna</span>
+                        <span className="font-mono font-bold">{tracking}</span>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                            <a href={labelUrl} target="_blank" rel="noopener noreferrer">
+                                <Download className="mr-2 h-4 w-4" />
+                                Stáhnout štítek
+                            </a>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                            <a href={`https://tracking.packeta.com/cs/?id=${tracking}`} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="mr-2 h-4 w-4" />
+                                Sledovat zásilku
+                            </a>
+                        </Button>
+                    </div>
                 </div>
-                <div className="flex gap-2">
-                    <a href={labelUrl} target="_blank" className="text-blue-600 underline">Stáhnout štítek (PDF)</a>
-                    <span className="text-gray-300">|</span>
-                    <a href={`https://tracking.packeta.com/cs/?id=${tracking}`} target="_blank" className="text-blue-600 underline">Sledovat zásilku</a>
+            ) : (
+                <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">Objednávka je připravena k expedici.</p>
+                    <Button 
+                        onClick={createLabel} 
+                        disabled={loading}
+                        className="w-full sm:w-auto"
+                        variant="destructive"
+                    >
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {loading ? 'Generuji...' : 'Vytvořit štítek (Zásilkovna)'}
+                    </Button>
                 </div>
-            </div>
-        ) : (
-            <div>
-                <p className="text-sm text-gray-500 mb-4">Objednávka je připravena k expedici.</p>
-                <button 
-                    onClick={createLabel} 
-                    disabled={loading}
-                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 disabled:opacity-50"
-                >
-                    {loading ? 'Generuji...' : 'Vytvořit štítek (Zásilkovna)'}
-                </button>
-            </div>
-        )}
-    </div>
+            )}
+        </CardContent>
+    </Card>
   );
 }

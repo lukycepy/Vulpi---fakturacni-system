@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/features/auth/auth-provider';
 import { createInvoice } from '../api/create-invoice';
+import { toast } from 'sonner';
 
 export function useCreateInvoice() {
   const { fetchWithAuth } = useAuth();
@@ -12,9 +13,11 @@ export function useCreateInvoice() {
     setError(null);
     try {
       const result = await createInvoice(data, fetchWithAuth);
+      toast.success('Faktura byla úspěšně vytvořena');
       return result;
     } catch (err: any) {
       setError(err);
+      toast.error('Chyba při vytváření faktury: ' + (err.message || 'Neznámá chyba'));
       throw err;
     } finally {
       setLoading(false);

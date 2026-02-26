@@ -1,7 +1,8 @@
-export async function getPipeline(organizationId: string) {
-  const res = await fetch(`/api/crm/pipeline?organizationId=${organizationId}`);
+export async function getPipeline(organizationId: string, fetcher: (url: string, init?: RequestInit) => Promise<Response> = fetch) {
+  const res = await fetcher(`/api/crm/pipeline?organizationId=${organizationId}`);
   if (!res.ok) {
-    throw new Error('Failed to fetch pipeline');
+    const error = await res.json();
+    throw new Error(error.message || 'Failed to fetch pipeline');
   }
   return res.json();
 }

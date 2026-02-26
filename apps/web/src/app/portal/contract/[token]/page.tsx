@@ -56,7 +56,7 @@ export default function SignContractPage({ params }: { params: { token: string }
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ signatureImage })
       });
-      alert('Smlouva podepsána!');
+      toast.success('Smlouva podepsána!');
       window.location.reload();
   };
 
@@ -93,10 +93,10 @@ export default function SignContractPage({ params }: { params: { token: string }
               </div>
               
               <div className="flex gap-4">
-                  <button onClick={clearSignature} className="text-gray-500 hover:underline">Smazat podpis</button>
-                  <button onClick={submitSignature} className="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700">
+                  <Button variant="ghost" onClick={clearSignature} className="text-gray-500">Smazat podpis</Button>
+                  <Button onClick={submitSignature} className="bg-blue-600 hover:bg-blue-700">
                       Odeslat a Podepsat
-                  </button>
+                  </Button>
               </div>
           </div>
       )}
