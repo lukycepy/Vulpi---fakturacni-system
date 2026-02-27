@@ -1,8 +1,10 @@
 'use client';
 
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export function InvoiceFormHeader({ 
     clientId, setClientId, clients, 
@@ -22,38 +24,32 @@ export function InvoiceFormHeader({
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div className="space-y-2">
-                 <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Odběratel
-                 </label>
-                 <select 
-                   value={clientId}
-                   onChange={e => setClientId(e.target.value)}
-                   className={cn(
-                       "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                   )}
+                 <Label>Odběratel</Label>
+                 <Select 
+                   value={clientId} 
+                   onValueChange={setClientId}
                  >
-                    {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                 </select>
+                   <SelectTrigger>
+                     <SelectValue placeholder="Vyberte klienta" />
+                   </SelectTrigger>
+                   <SelectContent>
+                     {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                   </SelectContent>
+                 </Select>
                  <p className="text-xs text-muted-foreground">Pro demo účely jsou klienti natvrdo</p>
                </div>
                
                <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Vystaveno
-                    </label>
+                    <Label>Vystaveno</Label>
                     <Input type="date" value={issueDate} onChange={e => setIssueDate(e.target.value)} />
                  </div>
                  <div className="space-y-2">
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        DUZP
-                    </label>
+                    <Label>DUZP</Label>
                     <Input type="date" value={taxableSupplyDate} onChange={e => setTaxableSupplyDate(e.target.value)} />
                  </div>
                  <div className="col-span-2 space-y-2">
-                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Splatnost
-                    </label>
+                    <Label>Splatnost</Label>
                     <Input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
                  </div>
                </div>

@@ -7,8 +7,10 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { ShoppingCart, CreditCard, Banknote, Search, X, Plus, Package } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export default function PosPage() {
   const { currentOrg } = useOrganization();
@@ -86,26 +88,28 @@ export default function PosPage() {
       {/* Left: Product Search & Grid */}
       <div className="flex-1 p-6 flex flex-col gap-6 overflow-hidden">
           <div className="grid grid-cols-2 gap-4">
-              <select 
-                  className={cn(
-                    "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  )}
+              <Select 
                   value={selectedDesk}
-                  onChange={e => setSelectedDesk(e.target.value)}
+                  onValueChange={setSelectedDesk}
               >
-                  <option value="">Vyberte pokladnu</option>
-                  {cashDesks.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-              </select>
-              <select 
-                  className={cn(
-                    "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  )}
+                  <SelectTrigger>
+                      <SelectValue placeholder="Vyberte pokladnu" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {cashDesks.map(d => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                  </SelectContent>
+              </Select>
+              <Select 
                   value={selectedWarehouse}
-                  onChange={e => setSelectedWarehouse(e.target.value)}
+                  onValueChange={setSelectedWarehouse}
               >
-                  <option value="">Vyberte sklad</option>
-                  {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-              </select>
+                  <SelectTrigger>
+                      <SelectValue placeholder="Vyberte sklad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {warehouses.map(w => <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>)}
+                  </SelectContent>
+              </Select>
           </div>
 
           <div className="relative">
@@ -179,9 +183,12 @@ export default function PosPage() {
                   </div>
               ))}
               {cart.length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground/40 space-y-4">
-                      <ShoppingCart className="h-16 w-16" />
-                      <p className="text-sm">Košík je prázdný</p>
+                  <div className="h-full flex items-center justify-center">
+                    <EmptyState
+                        icon={ShoppingCart}
+                        title="Košík je prázdný"
+                        description="Naskenujte nebo vyhledejte produkty pro přidání do košíku."
+                    />
                   </div>
               )}
           </div>

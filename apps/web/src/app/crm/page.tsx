@@ -73,6 +73,7 @@ export default function CrmPage() {
           onDragStart={onDragStart} 
           onDrop={onDrop} 
           createNewDeal={() => setIsModalOpen(true)} 
+          onDeleteDeal={handleDeleteDeal}
       />
 
       <Modal

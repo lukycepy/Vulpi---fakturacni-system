@@ -2,9 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { useOrganization } from '@/components/providers/organization-provider';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Play, Square, Timer, Trash2 } from 'lucide-react';
 
 export default function TimeTrackingPage() {
   const { currentOrg } = useOrganization();
+  const { fetchWithAuth } = useAuth();
   const [entries, setEntries] = useState<any[]>([]);
   const [timerRunning, setTimerRunning] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -16,13 +25,13 @@ export default function TimeTrackingPage() {
   useEffect(() => {
     if (currentOrg) {
         // Load Projects
-        fetch(`/api/projects?organizationId=${currentOrg.id}`)
-            .then(res => res.json())
+        fetchWithAuth(`/api/projects?organizationId=${currentOrg.id}`)
+            .then((res: Response) => res.json())
             .then(setProjects);
 
         // Load Entries
-        fetch(`/api/time-tracking?organizationId=${currentOrg.id}`)
-            .then(res => res.json())
+        fetchWithAuth(`/api/time-tracking?organizationId=${currentOrg.id}`)
+            .then((res: Response) => res.json())
             .then(setEntries);
     }
   }, [currentOrg]);
@@ -52,7 +61,7 @@ export default function TimeTrackingPage() {
       const endTime = new Date();
       const duration = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
 
-      await fetch('/api/time-tracking', {
+      await fetchWithAuth('/api/time-tracking', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -66,12 +75,27 @@ export default function TimeTrackingPage() {
       });
 
       // Refresh
-      const res = await fetch(`/api/time-tracking?organizationId=${currentOrg.id}`);
+      const res = await fetchWithAuth(`/api/time-tracking?organizationId=${currentOrg.id}`);
       setEntries(await res.json());
       
       setStartTime(null);
       setElapsed(0);
       setDescription('');
+  };
+
+  const deleteEntry = async (id: string) => {
+      try {
+          const res = await fetchWithAuth(`/api/time-tracking/${id}?organizationId=${currentOrg?.id}`, {
+              method: 'DELETE'
+          });
+          if (!res.ok) throw new Error('Failed to delete entry');
+          
+          setEntries(entries.filter(e => e.id !== id));
+          toast.success('Záznam smazán');
+      } catch (error) {
+          console.error(error);
+          toast.error('Chyba při mazání záznamu');
+      }
   };
 
   const formatTime = (seconds: number) => {
@@ -82,78 +106,116 @@ export default function TimeTrackingPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Měření času</h1>
+    <div className="max-w-6xl mx-auto p-6 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Měření času</h1>
+        <p className="text-muted-foreground mt-2">Sledujte čas strávený na projektech pro přesnou fakturaci.</p>
+      </div>
 
       {/* Timer Widget */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded shadow mb-8 flex items-center gap-4">
-          <input 
+      <Card className="p-6 flex flex-col md:flex-row items-center gap-4 bg-muted/30">
+          <div className="flex-1 w-full">
+            <Input 
               type="text" 
               placeholder="Na čem pracujete?" 
               value={description}
               onChange={e => setDescription(e.target.value)}
-              className="flex-1 border rounded px-4 py-2"
-          />
-          <select 
-              value={projectId}
-              onChange={e => setProjectId(e.target.value)}
-              className="border rounded px-4 py-2 w-48"
-          >
-              <option value="">-- Projekt --</option>
-              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-          <div className="font-mono text-2xl w-32 text-center">
+              className="bg-background"
+            />
+          </div>
+          <Select value={projectId} onValueChange={setProjectId}>
+            <SelectTrigger className="w-full md:w-48">
+                <SelectValue placeholder="-- Projekt --" />
+            </SelectTrigger>
+            <SelectContent>
+                {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <div className="font-mono text-2xl w-32 text-center font-bold text-primary">
               {formatTime(elapsed)}
           </div>
           {!timerRunning ? (
-              <button 
+              <Button 
                   onClick={startTimer}
-                  className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 font-bold"
+                  className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white"
+                  size="lg"
               >
-                  START
-              </button>
+                  <Play className="w-4 h-4 mr-2 fill-current" /> START
+              </Button>
           ) : (
-              <button 
+              <Button 
                   onClick={stopTimer}
-                  className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 font-bold"
+                  variant="destructive"
+                  size="lg"
+                  className="w-full md:w-auto"
               >
-                  STOP
-              </button>
+                  <Square className="w-4 h-4 mr-2 fill-current" /> STOP
+              </Button>
           )}
-      </div>
+      </Card>
 
       {/* History */}
-      <div className="bg-white dark:bg-gray-800 rounded shadow overflow-hidden">
-          <table className="w-full text-left">
-              <thead className="bg-gray-50 dark:bg-gray-700 border-b">
-                  <tr>
-                      <th className="p-4">Datum</th>
-                      <th className="p-4">Projekt</th>
-                      <th className="p-4">Popis</th>
-                      <th className="p-4">Doba trvání</th>
-                      <th className="p-4">Status</th>
-                  </tr>
-              </thead>
-              <tbody>
-                  {entries.map(entry => (
-                      <tr key={entry.id} className="border-b">
-                          <td className="p-4 text-gray-500">{new Date(entry.startTime).toLocaleDateString()}</td>
-                          <td className="p-4 font-medium">{entry.project?.name || '-'}</td>
-                          <td className="p-4">{entry.description}</td>
-                          <td className="p-4 font-mono">{formatTime(entry.duration)}</td>
-                          <td className="p-4">
-                              {entry.isInvoiced ? (
-                                  <span className="text-green-600 font-bold text-xs bg-green-100 px-2 py-1 rounded">VYFAKTUROVÁNO</span>
-                              ) : (
-                                  <span className="text-gray-500 text-xs bg-gray-100 px-2 py-1 rounded">NEFAKTUROVÁNO</span>
-                              )}
-                          </td>
-                      </tr>
-                  ))}
-                  {entries.length === 0 && <tr><td colSpan={5} className="p-4 text-center text-gray-500">Žádné záznamy</td></tr>}
-              </tbody>
-          </table>
-      </div>
+      <Card className="border-border/50 shadow-sm overflow-hidden">
+        <CardContent className="p-0">
+          {entries.length > 0 ? (
+            <div className="overflow-x-auto">
+            <Table>
+                <TableHeader className="bg-muted/50">
+                    <TableRow>
+                      <TableHead>Datum</TableHead>
+                      <TableHead>Projekt</TableHead>
+                      <TableHead>Popis</TableHead>
+                      <TableHead>Doba trvání</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Akce</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {entries.map(entry => (
+                        <TableRow key={entry.id}>
+                            <TableCell className="text-muted-foreground">{new Date(entry.startTime).toLocaleDateString()}</TableCell>
+                            <TableCell className="font-medium">{entry.project?.name || '-'}</TableCell>
+                            <TableCell>{entry.description}</TableCell>
+                            <TableCell className="font-mono">{formatTime(entry.duration)}</TableCell>
+                            <TableCell>
+                                {entry.isInvoiced ? (
+                                    <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200">VYFAKTUROVÁNO</Badge>
+                                ) : (
+                                    <Badge variant="outline" className="text-muted-foreground bg-muted/50">NEFAKTUROVÁNO</Badge>
+                                )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                                {!entry.isInvoiced && (
+                                  <ConfirmDialog
+                                      trigger={
+                                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                                              <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                      }
+                                      title="Smazat záznam?"
+                                      description="Opravdu chcete smazat tento časový záznam?"
+                                      onConfirm={() => deleteEntry(entry.id)}
+                                      variant="destructive"
+                                      actionLabel="Smazat"
+                                  />
+                                )}
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            </div>
+          ) : (
+              <div className="p-6">
+              <EmptyState
+                  icon={Timer}
+                  title="Žádné časové záznamy"
+                  description="Začněte měřit čas pro sledování vaší práce."
+              />
+              </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

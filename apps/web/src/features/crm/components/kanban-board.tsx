@@ -7,11 +7,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Plus, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function KanbanBoard({ stages, onDragStart, onDrop, createNewDeal }: { 
+export function KanbanBoard({ stages, onDragStart, onDrop, createNewDeal, onDeleteDeal }: { 
     stages: any[]; 
     onDragStart: (e: any, dealId: string) => void; 
     onDrop: (e: any, stageId: string) => void;
     createNewDeal: () => void;
+    onDeleteDeal: (dealId: string) => void;
 }) {
     const hasDeals = stages.some(stage => stage.deals.length > 0);
 
@@ -59,6 +60,7 @@ export function KanbanBoard({ stages, onDragStart, onDrop, createNewDeal }: {
                                 key={deal.id} 
                                 deal={deal} 
                                 onDragStart={onDragStart} 
+                                onDelete={onDeleteDeal}
                             />
                         ))}
                         {stage.order === 1 && (

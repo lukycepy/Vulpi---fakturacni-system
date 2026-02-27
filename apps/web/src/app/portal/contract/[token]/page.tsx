@@ -1,12 +1,18 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Loader2, PenTool, RotateCcw } from 'lucide-react';
 
 export default function SignContractPage({ params }: { params: { token: string } }) {
   const [contract, setContract] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetch(`/api/contracts/public/${params.token}`)
@@ -51,62 +57,122 @@ export default function SignContractPage({ params }: { params: { token: string }
       if (!canvas) return;
       const signatureImage = canvas.toDataURL();
 
-      await fetch(`/api/contracts/public/${params.token}/sign`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ signatureImage })
-      });
-      toast.success('Smlouva podepsána!');
-      window.location.reload();
+      setSubmitting(true);
+      const toastId = toast.loading('Odesílám podpis...');
+      try {
+        const res = await fetch(`/api/contracts/public/${params.token}/sign`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ signatureImage })
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => null);
+          toast.error(data?.message || 'Podpis se nepodařilo odeslat.', { id: toastId });
+          return;
+        }
+        toast.success('Smlouva podepsána.', { id: toastId });
+        window.location.reload();
+      } catch {
+        toast.error('Podpis se nepodařilo odeslat.', { id: toastId });
+      } finally {
+        setSubmitting(false);
+      }
   };
 
-  if (loading) return <div>Načítání...</div>;
-  if (!contract) return <div>Smlouva nenalezena.</div>;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+  if (!contract) return (
+    <div className="min-h-screen flex items-center justify-center p-6 text-muted-foreground">
+      Smlouva nenalezena.
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl mx-auto p-8 bg-white shadow-lg my-8 min-h-screen">
-      <div className="flex justify-between items-center mb-8 border-b pb-4">
-          <h1 className="text-2xl font-bold">{contract.name}</h1>
-          <div className={`px-3 py-1 rounded text-sm font-bold ${contract.status === 'SIGNED' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-              {contract.status === 'SIGNED' ? 'PODEPSÁNO' : 'ČEKÁ NA PODPIS'}
-          </div>
-      </div>
+    <div className="min-h-screen bg-muted/30 py-10 px-4">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Card>
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <CardTitle className="text-2xl">{contract.name}</CardTitle>
+              <div className="text-sm text-muted-foreground">
+                {contract.status === 'SIGNED' ? 'Dokument je platně podepsán.' : 'Dokument čeká na podpis.'}
+              </div>
+            </div>
+            <div
+              className={[
+                "px-3 py-1 rounded-full text-xs font-semibold border",
+                contract.status === 'SIGNED'
+                  ? "bg-green-50 text-green-700 border-green-200"
+                  : "bg-yellow-50 text-yellow-700 border-yellow-200",
+              ].join(" ")}
+            >
+              {contract.status === 'SIGNED' ? 'Podepsáno' : 'Čeká na podpis'}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div
+              className="prose max-w-none p-6 rounded-lg border bg-background"
+              dangerouslySetInnerHTML={{ __html: contract.content }}
+            />
 
-      <div className="prose max-w-none mb-12 p-8 border bg-gray-50 rounded" dangerouslySetInnerHTML={{ __html: contract.content }} />
+            {contract.status !== 'SIGNED' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 font-semibold">
+                  <PenTool className="h-4 w-4 text-primary" />
+                  Podpis
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Podepište se myší nebo prstem do pole níže.
+                </div>
 
-      {contract.status !== 'SIGNED' && (
-          <div className="border-t pt-8">
-              <h3 className="text-lg font-bold mb-4">Podpis</h3>
-              <p className="text-sm text-gray-500 mb-4">Prosím podepište se do pole níže myší nebo prstem.</p>
-              
-              <div className="border-2 border-dashed border-gray-300 rounded mb-4 inline-block">
-                  <canvas 
-                      ref={canvasRef}
-                      width={500}
-                      height={200}
-                      className="cursor-crosshair bg-white"
-                      onMouseDown={startDrawing}
-                      onMouseMove={draw}
-                      onMouseUp={stopDrawing}
-                      onMouseLeave={stopDrawing}
+                <div className="border-2 border-dashed border-border rounded-lg inline-block bg-background p-2">
+                  <canvas
+                    ref={canvasRef}
+                    width={520}
+                    height={200}
+                    className="cursor-crosshair bg-background rounded"
+                    onMouseDown={startDrawing}
+                    onMouseMove={draw}
+                    onMouseUp={stopDrawing}
+                    onMouseLeave={stopDrawing}
                   />
-              </div>
-              
-              <div className="flex gap-4">
-                  <Button variant="ghost" onClick={clearSignature} className="text-gray-500">Smazat podpis</Button>
-                  <Button onClick={submitSignature} className="bg-blue-600 hover:bg-blue-700">
-                      Odeslat a Podepsat
-                  </Button>
-              </div>
-          </div>
-      )}
+                </div>
 
-      {contract.status === 'SIGNED' && (
-          <div className="text-center p-8 bg-green-50 rounded border border-green-200">
-              <h3 className="text-xl font-bold text-green-800 mb-2">Dokument je platně podepsán.</h3>
-              <p className="text-green-700">Děkujeme. Kopie vám byla odeslána na e-mail.</p>
-          </div>
-      )}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button variant="outline" onClick={clearSignature} disabled={submitting}>
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Smazat podpis
+                  </Button>
+                  <ConfirmDialog
+                    trigger={
+                      <Button className="sm:ml-auto" variant="blue" disabled={submitting}>
+                        {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        Odeslat a podepsat
+                      </Button>
+                    }
+                    title="Odeslat podpis?"
+                    description="Potvrďte odeslání podpisu. Po odeslání se dokument označí jako podepsaný."
+                    actionLabel="Odeslat"
+                    onConfirm={submitSignature}
+                  />
+                </div>
+              </div>
+            )}
+
+            {contract.status === 'SIGNED' && (
+              <div className="text-center p-6 rounded-lg border bg-green-50 border-green-200">
+                <div className="text-lg font-semibold text-green-800">Dokument je podepsaný.</div>
+                <div className="text-sm text-green-700 mt-1">
+                  Děkujeme. Kopie vám byla odeslána na e-mail.
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

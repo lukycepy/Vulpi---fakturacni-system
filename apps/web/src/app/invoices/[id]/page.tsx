@@ -4,11 +4,13 @@ import { useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import IsdsWidget from '@/features/invoices/components/isds-widget';
+import { useAuth } from '@/features/auth/auth-provider';
 import { useInvoice } from '@/features/invoices/hooks/use-invoice';
 import { useSendInvoice } from '@/features/invoices/hooks/use-send-invoice';
 import { useDeleteInvoice } from '@/features/invoices/hooks/use-delete-invoice';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
@@ -21,11 +23,38 @@ export default function InvoiceDetailPage() {
   const searchParams = useSearchParams();
   const id = params.id as string;
   
+  const { fetchWithAuth } = useAuth();
   const { data: invoice, loading, mutate } = useInvoice(id);
   const { send, sending } = useSendInvoice();
   const { deleteInvoice, deleting } = useDeleteInvoice();
   
   const [lang, setLang] = useState(searchParams.get('lang') || 'cs');
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    if (!invoice) return;
+    
+    setPdfLoading(true);
+    try {
+        const res = await fetchWithAuth(`/api/invoices/${invoice.id}/pdf?lang=${lang}`);
+        if (!res.ok) throw new Error('Failed to generate PDF');
+        
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `faktura-${invoice.number}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success('PDF staženo');
+    } catch (e: any) {
+        toast.error(e.message || 'Chyba při generování PDF');
+    } finally {
+        setPdfLoading(false);
+    }
+  };
 
   const handleSendEmail = async () => {
     if (!invoice) return;
@@ -36,7 +65,7 @@ export default function InvoiceDetailPage() {
         // Refresh invoice status
         mutate({ ...invoice, status: 'sent' });
     } catch (err: any) {
-        toast.error(err.message || 'Chyba při odesílání faktury');
+        // Error is handled in hook toast, but we catch here to stop execution flow if needed
     }
   };
 
@@ -72,29 +101,27 @@ export default function InvoiceDetailPage() {
         </div>
         
         <div className="flex flex-wrap gap-3 items-center">
-            <div className="relative">
-                <Globe className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
-                <select 
-                    value={lang} 
-                    onChange={(e) => setLang(e.target.value)}
-                    className={cn(
-                        "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-8 w-[130px]"
-                    )}
-                >
-                    <option value="cs">Čeština</option>
-                    <option value="en">English</option>
-                    <option value="de">Deutsch</option>
-                </select>
+            <div className="w-[140px]">
+                <Select value={lang} onValueChange={setLang}>
+                    <SelectTrigger className="pl-9 relative">
+                        <Globe className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="cs">Čeština</SelectItem>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="de">Deutsch</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
             
-            <Button asChild variant="outline">
-                <Link 
-                  href={`/api/invoices/${invoice.id}/pdf?lang=${lang}`} 
-                  target="_blank"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Stáhnout PDF
-                </Link>
+            <Button 
+                onClick={handleDownloadPdf}
+                disabled={pdfLoading}
+                variant="outline"
+            >
+                {pdfLoading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
+                {pdfLoading ? 'Generuji PDF...' : 'Stáhnout PDF'}
             </Button>
             
             <ConfirmDialog

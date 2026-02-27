@@ -3,9 +3,11 @@
 import { InvoiceItem } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export function InvoiceItemsTable({ items, setItems }: { items: InvoiceItem[], setItems: (items: InvoiceItem[]) => void }) {
     const addItem = () => {
@@ -94,31 +96,41 @@ export function InvoiceItemsTable({ items, setItems }: { items: InvoiceItem[], s
                                 </div>
                                 <div className="w-1/2 md:w-24 space-y-1">
                                     <label className="md:hidden text-xs font-medium text-muted-foreground">DPH</label>
-                                    <select 
-                                        value={item.vatRate}
-                                        onChange={e => updateItem(idx, 'vatRate', Number(e.target.value))}
-                                        className={cn(
-                                            "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                        )}
+                                    <Select 
+                                        value={item.vatRate.toString()}
+                                        onValueChange={value => updateItem(idx, 'vatRate', Number(value))}
                                     >
-                                        <option value={21}>21%</option>
-                                        <option value={15}>15%</option>
-                                        <option value={12}>12%</option>
-                                        <option value={0}>0%</option>
-                                    </select>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="DPH" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="21">21%</SelectItem>
+                                            <SelectItem value="15">15%</SelectItem>
+                                            <SelectItem value="12">12%</SelectItem>
+                                            <SelectItem value="0">0%</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                             </div>
                             
                             <div className="flex justify-end w-full md:w-auto mt-2 md:mt-0 pt-1">
-                                <Button 
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => removeItem(idx)}
-                                    className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <ConfirmDialog
+                                    trigger={
+                                        <Button 
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    }
+                                    title="Smazat položku?"
+                                    description="Opravdu chcete odebrat tuto položku z faktury?"
+                                    onConfirm={() => removeItem(idx)}
+                                    variant="destructive"
+                                    actionLabel="Odebrat"
+                                />
                             </div>
                         </div>
                     ))}

@@ -62,11 +62,11 @@ export default function InvoicesPage() {
                 </Button>
             </div>
 
-            <Card>
+            <Card className="border-border/50 shadow-sm overflow-hidden">
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <Table>
-                            <TableHeader>
+                            <TableHeader className="bg-muted/50">
                                 <TableRow>
                                     <TableHead>Číslo</TableHead>
                                     <TableHead>Klient</TableHead>

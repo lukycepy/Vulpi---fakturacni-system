@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import CashflowWidget from '@/features/dashboard/components/cashflow-widget';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import UnpaidInvoicesWidget from '@/features/dashboard/components/unpaid-invoices-widget';
+import QuickActionsWidget from '@/features/dashboard/components/quick-actions-widget';
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Building2, FileText, ShoppingCart, Receipt, BarChart3, Package, Settings, Code2, ShieldCheck, Clock, Plug, Activity, Users, Wallet } from "lucide-react";
 
 const dashboardItems = [
@@ -24,49 +26,42 @@ const dashboardItems = [
 
 export default function DashboardPage() {
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+    <div className="max-w-7xl mx-auto p-6 space-y-8">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+      </div>
       
-      {/* AI Cashflow Widget */}
-      <CashflowWidget />
-      
-      {/* Financial Overview Widget */}
-      <Card className="mb-8 border-none bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
-        <CardHeader>
-             <CardTitle className="text-lg font-medium opacity-90">Finanční přehled (Tento rok)</CardTitle>
-        </CardHeader>
-        <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-               <div>
-                 <div className="text-sm opacity-75">Příjmy</div>
-                 <div className="text-3xl font-bold tracking-tight">+ 1 250 000 Kč</div>
-               </div>
-               <div>
-                 <div className="text-sm opacity-75">Výdaje</div>
-                 <div className="text-3xl font-bold tracking-tight">- 450 000 Kč</div>
-               </div>
-               <div>
-                 <div className="text-sm opacity-75">Odhad daně (19%)</div>
-                 <div className="text-3xl font-bold tracking-tight">152 000 Kč</div>
-               </div>
-            </div>
-        </CardContent>
-      </Card>
+      {/* Main Widgets Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Cashflow - Takes 7/12 columns on large screens */}
+          <div className="lg:col-span-7 xl:col-span-8">
+              <CashflowWidget />
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-        {dashboardItems.map((item) => (
-            <Link key={item.href} href={item.href} className="group">
-                <Card className="h-full hover:shadow-md transition-all hover:border-primary/50">
-                    <CardHeader className="space-y-1">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                            <item.icon className={`h-5 w-5 ${item.color}`} />
-                            {item.title}
-                        </CardTitle>
-                        <CardDescription>{item.desc}</CardDescription>
-                    </CardHeader>
-                </Card>
-            </Link>
-        ))}
+          {/* Side Widgets - Takes 5/12 columns */}
+          <div className="lg:col-span-5 xl:col-span-4 space-y-6">
+              <QuickActionsWidget />
+              <UnpaidInvoicesWidget />
+          </div>
+      </div>
+
+      <div>
+        <h2 className="text-xl font-semibold mb-4 text-muted-foreground">Rychlý přístup k modulům</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {dashboardItems.map((item) => (
+              <Link key={item.href} href={item.href} className="group">
+                  <Card className="h-full hover:shadow-md transition-all hover:border-primary/50">
+                      <CardHeader className="space-y-1">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                              <item.icon className={`h-5 w-5 ${item.color}`} />
+                              {item.title}
+                          </CardTitle>
+                          <CardDescription>{item.desc}</CardDescription>
+                      </CardHeader>
+                  </Card>
+              </Link>
+          ))}
+        </div>
       </div>
     </div>
   );

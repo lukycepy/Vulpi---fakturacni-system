@@ -2,37 +2,48 @@
 
 import { useOrganization } from './providers/organization-provider';
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Plus, Loader2 } from 'lucide-react';
 
 export function OrganizationSwitcher() {
   const { currentOrg, organizations, setCurrentOrg, isLoading } = useOrganization();
 
   if (isLoading) {
-    return <div className="text-sm text-gray-500">Načítání...</div>;
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Načítání...
+      </div>
+    );
   }
 
   return (
     <div className="flex items-center gap-2">
-      <select
-        className="border rounded px-2 py-1 text-sm bg-white dark:bg-black"
-        value={currentOrg?.id || ''}
-        onChange={(e) => {
-          const org = organizations.find((o) => o.id === e.target.value);
+      <Select
+        value={currentOrg?.id}
+        onValueChange={(value) => {
+          const org = organizations.find((o) => o.id === value);
           if (org) setCurrentOrg(org);
         }}
       >
-        <option value="" disabled>Vyberte organizaci</option>
-        {organizations.map((org) => (
-          <option key={org.id} value={org.id}>
-            {org.name} ({org.ico})
-          </option>
-        ))}
-      </select>
-      <Link
-        href="/organizations/new"
-        className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-      >
-        + Nová
-      </Link>
+        <SelectTrigger className="w-[200px]">
+          <SelectValue placeholder="Vyberte organizaci" />
+        </SelectTrigger>
+        <SelectContent>
+          {organizations.map((org) => (
+            <SelectItem key={org.id} value={org.id}>
+              {org.name} ({org.ico})
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button asChild size="sm" variant="default">
+        <Link href="/organizations/new">
+          <Plus className="h-4 w-4 mr-1" />
+          Nová
+        </Link>
+      </Button>
     </div>
   );
 }

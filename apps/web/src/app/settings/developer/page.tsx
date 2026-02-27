@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useOrganization } from '@/components/providers/organization-provider';
+import { useAuth } from '@/features/auth/auth-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -9,10 +10,12 @@ import { Modal } from '@/components/ui/modal';
 import { toast } from 'sonner';
 import { Copy, Plus, Trash2, Key, Webhook } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export default function DeveloperSettingsPage() {
   const { currentOrg } = useOrganization();
+  const { fetchWithAuth } = useAuth();
   const [keys, setKeys] = useState<any[]>([]);
   const [webhooks, setWebhooks] = useState<any[]>([]);
   const [newKey, setNewKey] = useState<string | null>(null);
@@ -34,7 +37,7 @@ export default function DeveloperSettingsPage() {
 
   const loadKeys = async () => {
     try {
-      const res = await fetch(`/api/api-keys?organizationId=${currentOrg?.id}`);
+      const res = await fetchWithAuth(`/api/api-keys?organizationId=${currentOrg?.id}`);
       if (res.ok) setKeys(await res.json());
     } catch (error) {
       console.error('Failed to load keys:', error);
@@ -44,7 +47,7 @@ export default function DeveloperSettingsPage() {
 
   const loadWebhooks = async () => {
     try {
-      const res = await fetch(`/api/webhooks?organizationId=${currentOrg?.id}`);
+      const res = await fetchWithAuth(`/api/webhooks?organizationId=${currentOrg?.id}`);
       if (res.ok) setWebhooks(await res.json());
     } catch (error) {
       console.error('Failed to load webhooks:', error);
@@ -60,7 +63,7 @@ export default function DeveloperSettingsPage() {
 
     setLoading(true);
     try {
-        const res = await fetch('/api/api-keys', {
+        const res = await fetchWithAuth('/api/api-keys', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ organizationId: currentOrg?.id, name: keyName })
@@ -84,7 +87,7 @@ export default function DeveloperSettingsPage() {
 
   const handleDeleteKey = async (id: string) => {
       try {
-        const res = await fetch(`/api/api-keys/${id}?organizationId=${currentOrg?.id}`, { method: 'DELETE' });
+        const res = await fetchWithAuth(`/api/api-keys/${id}?organizationId=${currentOrg?.id}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Failed to delete key');
         
         loadKeys();
@@ -102,7 +105,7 @@ export default function DeveloperSettingsPage() {
       }
       
       try {
-        const res = await fetch('/api/webhooks', {
+        const res = await fetchWithAuth('/api/webhooks', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -184,27 +187,29 @@ export default function DeveloperSettingsPage() {
             )}
 
             {keys.length > 0 ? (
-                <div className="rounded-md border">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-muted/50">
-                            <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Název</th>
-                                <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Prefix</th>
-                                <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Vytvořeno</th>
-                                <th className="h-12 px-4 align-middle font-medium text-muted-foreground">Naposledy použito</th>
-                                <th className="h-12 px-4 align-middle font-medium text-muted-foreground text-right">Akce</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                <Card className="border-border/50 shadow-sm overflow-hidden">
+                    <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader className="bg-muted/50">
+                            <TableRow>
+                                <TableHead className="h-12 px-4 align-middle font-medium text-muted-foreground">Název</TableHead>
+                                <TableHead className="h-12 px-4 align-middle font-medium text-muted-foreground">Prefix</TableHead>
+                                <TableHead className="h-12 px-4 align-middle font-medium text-muted-foreground">Vytvořeno</TableHead>
+                                <TableHead className="h-12 px-4 align-middle font-medium text-muted-foreground">Naposledy použito</TableHead>
+                                <TableHead className="h-12 px-4 align-middle font-medium text-muted-foreground text-right">Akce</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {keys.map(key => (
-                                <tr key={key.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                    <td className="p-4 align-middle font-medium">{key.name}</td>
-                                    <td className="p-4 align-middle font-mono text-xs">{key.keyPrefix}...</td>
-                                    <td className="p-4 align-middle text-muted-foreground">{new Date(key.createdAt).toLocaleDateString()}</td>
-                                    <td className="p-4 align-middle text-muted-foreground">
+                                <TableRow key={key.id}>
+                                    <TableCell className="p-4 align-middle font-medium">{key.name}</TableCell>
+                                    <TableCell className="p-4 align-middle font-mono text-xs">{key.keyPrefix}...</TableCell>
+                                    <TableCell className="p-4 align-middle text-muted-foreground">{new Date(key.createdAt).toLocaleDateString()}</TableCell>
+                                    <TableCell className="p-4 align-middle text-muted-foreground">
                                         {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : '-'}
-                                    </td>
-                                    <td className="p-4 align-middle text-right">
+                                    </TableCell>
+                                    <TableCell className="p-4 align-middle text-right">
                                         <ConfirmDialog
                                             trigger={
                                                 <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
@@ -217,12 +222,14 @@ export default function DeveloperSettingsPage() {
                                             variant="destructive"
                                             actionLabel="Smazat"
                                         />
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))}
-                        </tbody>
-                    </table>
-                </div>
+                        </TableBody>
+                    </Table>
+                    </div>
+                    </CardContent>
+                </Card>
             ) : (
                 <EmptyState
                     icon={Key}

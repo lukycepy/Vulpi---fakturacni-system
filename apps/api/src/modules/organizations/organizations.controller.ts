@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Query, BadRequestException, Put, UseGuards, Req } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { AresService } from './ares.service';
-import { CreateOrganizationDto, UpdateEmailConfigDto, UpdateBankConfigDto } from './dto/create-organization.dto';
+import { CreateOrganizationDto, UpdateEmailConfigDto, UpdateBankConfigDto, UpdateReminderSettingsDto } from './dto/create-organization.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('organizations')
@@ -11,6 +11,16 @@ export class OrganizationsController {
     private readonly organizationsService: OrganizationsService,
     private readonly aresService: AresService,
   ) {}
+
+  @Put(':id/reminder-settings')
+  async updateReminderSettings(@Param('id') id: string, @Body() settings: UpdateReminderSettingsDto) {
+    return this.organizationsService.updateReminderSettings(id, settings);
+  }
+
+  @Get(':id/reminder-settings')
+  async getReminderSettings(@Param('id') id: string) {
+    return this.organizationsService.getReminderSettings(id);
+  }
 
   @Get('ares/:ico')
   async lookupAres(@Param('ico') ico: string) {

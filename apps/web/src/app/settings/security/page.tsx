@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
-import { Loader2, Shield, Key, Lock, Trash2, Check, Plus, AlertTriangle } from 'lucide-react';
+import { Loader2, Shield, Key, Lock, Trash2, Check, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function SecurityPage() {
   const { currentOrg } = useOrganization();
@@ -34,7 +35,7 @@ export default function SecurityPage() {
       .then(data => {
         setTwoFactorEnabled(data.twoFactorEnabled);
       })
-      .catch(err => console.error(err));
+      .catch(() => toast.error('Nepodařilo se načíst stav 2FA.'));
 
     // Fetch passkeys
     fetch('/api/auth/webauthn/credentials')
@@ -42,7 +43,7 @@ export default function SecurityPage() {
       .then(data => {
           if (Array.isArray(data)) setPasskeys(data);
       })
-      .catch(err => console.error(err));
+      .catch(() => toast.error('Nepodařilo se načíst passkeys.'));
   }, []);
 
   const registerPasskey = async () => {
@@ -69,7 +70,6 @@ export default function SecurityPage() {
             toast.error('Chyba při registraci Passkey.');
         }
     } catch (e: any) {
-        console.error(e);
         toast.error('Chyba: ' + (e.message || e));
     }
   };
@@ -302,11 +302,11 @@ export default function SecurityPage() {
           <CardContent>
              <div className="space-y-2">
                 <Label htmlFor="ips">Povolené IP adresy (jedna na řádek)</Label>
-                <textarea 
+                <Textarea 
                     id="ips"
                     value={ips}
                     onChange={e => setIps(e.target.value)}
-                    className="flex min-h-[150px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono"
+                    className="min-h-[150px] font-mono"
                     placeholder="192.168.1.1&#10;8.8.8.8"
                 />
              </div>

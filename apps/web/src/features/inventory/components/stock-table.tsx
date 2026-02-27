@@ -11,7 +11,7 @@ import {
 export function StockTable({ stocks }: { stocks: any[] }) {
     return (
         <Table>
-            <TableHeader>
+            <TableHeader className="bg-muted/50">
                 <TableRow>
                     <TableHead>Produkt</TableHead>
                     <TableHead className="text-right">Množství</TableHead>

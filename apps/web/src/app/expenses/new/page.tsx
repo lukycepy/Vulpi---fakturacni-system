@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useOrganization } from '@/components/providers/organization-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Loader2, Upload, Save } from 'lucide-react';
@@ -11,6 +13,7 @@ import { cn } from '@/lib/utils';
 
 export default function NewExpensePage() {
   const { currentOrg } = useOrganization();
+  const { fetchWithAuth } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -66,7 +69,7 @@ export default function NewExpensePage() {
       setSaving(true);
 
       try {
-        const res = await fetch('/api/expenses', {
+        const res = await fetchWithAuth('/api/expenses', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -124,8 +127,8 @@ export default function NewExpensePage() {
       </Card>
 
       <form onSubmit={handleSubmit} className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border">
-          <div>
-              <label className="block text-sm font-medium mb-1">Popis</label>
+          <div className="space-y-2">
+              <Label>Popis</Label>
               <Input 
                   type="text" 
                   value={formData.description}
@@ -136,8 +139,8 @@ export default function NewExpensePage() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                  <label className="block text-sm font-medium mb-1">IČO Dodavatele</label>
+              <div className="space-y-2">
+                  <Label>IČO Dodavatele</Label>
                   <Input 
                       type="text" 
                       value={formData.supplierIco}
@@ -145,8 +148,8 @@ export default function NewExpensePage() {
                       placeholder="00000000"
                   />
               </div>
-               <div>
-                  <label className="block text-sm font-medium mb-1">Dodavatel (Název)</label>
+               <div className="space-y-2">
+                  <Label>Dodavatel (Název)</Label>
                   <Input 
                       type="text" 
                       value={formData.supplierName}
@@ -158,8 +161,8 @@ export default function NewExpensePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                  <label className="block text-sm font-medium mb-1">Částka (CZK)</label>
+              <div className="space-y-2">
+                  <Label>Částka (CZK)</Label>
                   <Input 
                       type="number" 
                       value={formData.amount}
@@ -168,8 +171,8 @@ export default function NewExpensePage() {
                       placeholder="0.00"
                   />
               </div>
-               <div>
-                  <label className="block text-sm font-medium mb-1">Datum vystavení</label>
+               <div className="space-y-2">
+                  <Label>Datum vystavení</Label>
                   <Input 
                       type="date" 
                       value={formData.issueDate}
@@ -180,8 +183,8 @@ export default function NewExpensePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                  <label className="block text-sm font-medium mb-1">Kategorie (AI)</label>
+              <div className="space-y-2">
+                  <Label>Kategorie (AI)</Label>
                   <Input 
                       type="text" 
                       value={formData.category}
@@ -189,19 +192,21 @@ export default function NewExpensePage() {
                       placeholder="Automaticky doplněno"
                   />
               </div>
-               <div>
-                  <label className="block text-sm font-medium mb-1">DPH (%)</label>
-                  <select 
-                      value={formData.vatRate}
-                      onChange={e => setFormData({...formData, vatRate: e.target.value})}
-                      className={cn(
-                          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                      )}
+               <div className="space-y-2">
+                  <Label>DPH (%)</Label>
+                  <Select 
+                      value={String(formData.vatRate)}
+                      onValueChange={(val) => setFormData({...formData, vatRate: val})}
                   >
-                      <option value="21">21%</option>
-                      <option value="12">12%</option>
-                      <option value="0">0%</option>
-                  </select>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Vyberte sazbu" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="21">21%</SelectItem>
+                          <SelectItem value="12">12%</SelectItem>
+                          <SelectItem value="0">0%</SelectItem>
+                      </SelectContent>
+                  </Select>
               </div>
           </div>
 

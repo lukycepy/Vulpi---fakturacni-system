@@ -5,9 +5,20 @@ import { useOrganization } from '@/components/providers/organization-provider';
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Plus, ArrowUpRight, ArrowDownLeft, FileText, Wallet } from "lucide-react";
+import { EmptyState } from '@/components/ui/empty-state';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Plus, ArrowUpRight, ArrowDownLeft, FileText, Wallet, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function CashDeskPage() {
@@ -188,13 +199,14 @@ export default function CashDeskPage() {
               </div>
 
               {/* History */}
-              <div className="lg:col-span-2 bg-card rounded-lg shadow-sm border overflow-hidden">
-                  <div className="p-4 border-b bg-muted/30">
-                      <h3 className="font-bold">Historie transakcí</h3>
-                  </div>
+              <Card className="lg:col-span-2 border-border/50 shadow-sm overflow-hidden">
+                  <CardHeader className="p-4 border-b bg-muted/30">
+                      <CardTitle className="font-bold text-base">Historie transakcí</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
                   <div className="overflow-x-auto">
                     <Table>
-                        <TableHeader>
+                        <TableHeader className="bg-muted/50">
                             <TableRow>
                                 <TableHead>Datum</TableHead>
                                 <TableHead>Popis</TableHead>
@@ -211,10 +223,10 @@ export default function CashDeskPage() {
                                     </TableCell>
                                     <TableCell className="font-medium">{tx.description}</TableCell>
                                     <TableCell className="text-right text-green-600 font-bold font-mono">
-                                        {tx.type === 'INCOME' ? `+${Number(tx.amount).toFixed(2)}` : ''}
+                                        {tx.type === 'INCOME' ? `+${tx.amount}` : '-'}
                                     </TableCell>
-                                    <TableCell className="text-right text-destructive font-bold font-mono">
-                                        {tx.type === 'EXPENSE' ? `-${Number(tx.amount).toFixed(2)}` : ''}
+                                    <TableCell className="text-right text-red-600 font-bold font-mono">
+                                        {tx.type === 'EXPENSE' ? `-${tx.amount}` : '-'}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <Button variant="ghost" size="sm" asChild>
@@ -226,13 +238,20 @@ export default function CashDeskPage() {
                                     </TableCell>
                                 </TableRow>
                             ))}
-                            {selectedDesk.transactions.length === 0 && (
-                                <TableRow><TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Žádné transakce</TableCell></TableRow>
-                            )}
                         </TableBody>
                     </Table>
                   </div>
-              </div>
+                  {selectedDesk.transactions.length === 0 && (
+                      <div className="p-6">
+                        <EmptyState
+                            title="Žádné transakce"
+                            description="Zatím nebyly provedeny žádné transakce."
+                            icon={Receipt}
+                        />
+                      </div>
+                  )}
+                  </CardContent>
+              </Card>
           </div>
       )}
 
@@ -247,7 +266,7 @@ export default function CashDeskPage() {
       >
           <div className="space-y-4 py-4">
               <div className="space-y-2">
-                  <label className="text-sm font-medium">Název</label>
+                  <Label className="text-sm font-medium">Název</Label>
                   <Input 
                       value={newDeskName}
                       onChange={e => setNewDeskName(e.target.value)}

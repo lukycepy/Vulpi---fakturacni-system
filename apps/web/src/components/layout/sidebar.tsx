@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/features/auth/auth-provider';
-import { useOrganization } from '../providers/organization-provider';
 import { cn } from '@/lib/utils';
 import { 
     LayoutDashboard, 
@@ -25,7 +24,6 @@ import { Button } from '@/components/ui/button';
 export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const { currentOrg } = useOrganization();
 
   if (!user) return null; 
 
@@ -50,8 +48,8 @@ export function Sidebar() {
     );
   };
 
-  const isAdmin = user.role === 'ADMIN';
-  const isWorker = user.role === 'WORKER';
+  const isAdmin = user.role === 'SUPERADMIN' || user.role === 'MANAGER' || user.role === 'ACCOUNTANT';
+  const isWorker = user.role === 'USER';
   const isClient = user.role === 'CLIENT';
 
   return (

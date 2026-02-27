@@ -23,7 +23,7 @@ export default function BarcodeLabel({ value, text }: { value: string, text: str
   }, [value, text]);
 
   return (
-    <div className="border p-4 inline-block bg-white text-center rounded shadow-sm">
+    <div className="border p-4 inline-block bg-card text-card-foreground text-center rounded shadow-sm">
         <div className="text-sm font-bold mb-2 truncate max-w-[200px]">{text}</div>
         <canvas ref={canvasRef} />
     </div>

@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, ExternalLink, Wand2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, FileText, ExternalLink, Wand2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
 
@@ -22,6 +23,7 @@ export default function ContractsPage() {
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [selectedClient, setSelectedClient] = useState('');
   const [clients, setClients] = useState<any[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Template Modal
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -63,6 +65,7 @@ export default function ContractsPage() {
           return;
       }
       
+      setIsGenerating(true);
       try {
         await fetch('/api/contracts/generate', {
             method: 'POST',
@@ -79,6 +82,8 @@ export default function ContractsPage() {
         toast.success("Smlouva vygenerována");
       } catch (e) {
           toast.error("Chyba při generování smlouvy");
+      } finally {
+          setIsGenerating(false);
       }
   };
 
@@ -108,30 +113,37 @@ export default function ContractsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                       <div className="space-y-2">
                           <label className="text-sm font-medium">Klient</label>
-                          <select 
-                              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                              value={selectedClient}
-                              onChange={e => setSelectedClient(e.target.value)}
+                          <Select 
+                              value={selectedClient} 
+                              onValueChange={setSelectedClient}
                           >
-                              <option value="">Vyberte klienta</option>
-                              {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                          </select>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Vyberte klienta" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
                       </div>
                       <div className="space-y-2">
                           <label className="text-sm font-medium">Šablona</label>
-                          <select 
-                              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                              value={selectedTemplate}
-                              onChange={e => setSelectedTemplate(e.target.value)}
+                          <Select 
+                              value={selectedTemplate} 
+                              onValueChange={setSelectedTemplate}
                           >
-                              <option value="">Vyberte šablonu</option>
-                              {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                          </select>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Vyberte šablonu" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  {templates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
                       </div>
                   </div>
                   <div className="flex justify-end">
-                    <Button onClick={generateContract}>
-                        Vytvořit smlouvu
+                    <Button onClick={generateContract} disabled={isGenerating}>
+                        {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isGenerating ? "Generuji..." : "Vytvořit smlouvu"}
                     </Button>
                   </div>
               </CardContent>

@@ -3,22 +3,26 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { Loader2, UserPlus } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
 
     if (password.length < 12) {
-      setError('Heslo musí mít alespoň 12 znaků');
+      toast.error('Heslo musí mít alespoň 12 znaků');
       setLoading(false);
       return;
     }
@@ -36,92 +40,87 @@ export default function RegisterPage() {
         throw new Error(data.message || 'Registrace se nezdařila');
       }
 
+      toast.success('Registrace proběhla úspěšně! Vítejte.');
       // Success - backend sets cookies
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message || 'Neočekávaná chyba při registraci');
       setLoading(false);
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Vytvořit nový účet
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Nebo{' '}
-            <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500">
-              se přihlaste
-            </Link>
-          </p>
-        </div>
-        
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded text-sm text-center">
-            {error}
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="space-y-1">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 bg-primary/10 rounded-full">
+              <UserPlus className="h-6 w-6 text-primary" />
+            </div>
           </div>
-        )}
-
-        <form className="mt-8 space-y-6" onSubmit={handleRegister}>
-          <div className="-space-y-px rounded-md shadow-sm">
-            <div>
-              <label htmlFor="name" className="sr-only">Jméno a příjmení</label>
-              <input
+          <CardTitle className="text-2xl font-bold text-center">Vytvořit nový účet</CardTitle>
+          <CardDescription className="text-center">
+            Zadejte své údaje pro vytvoření účtu
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Jméno a příjmení</Label>
+              <Input
                 id="name"
-                name="name"
                 type="text"
                 autoComplete="name"
                 required
-                className="relative block w-full rounded-t-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3 dark:bg-gray-700 dark:text-white dark:ring-gray-600"
-                placeholder="Jméno a příjmení"
+                placeholder="Jan Novák"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            <div>
-              <label htmlFor="email-address" className="sr-only">Emailová adresa</label>
-              <input
-                id="email-address"
-                name="email"
+            <div className="space-y-2">
+              <Label htmlFor="email">Emailová adresa</Label>
+              <Input
+                id="email"
                 type="email"
                 autoComplete="email"
                 required
-                className="relative block w-full border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3 dark:bg-gray-700 dark:text-white dark:ring-gray-600"
-                placeholder="Emailová adresa"
+                placeholder="jan@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div>
-              <label htmlFor="password" className="sr-only">Heslo</label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="password">Heslo</Label>
+              <Input
                 id="password"
-                name="password"
                 type="password"
                 autoComplete="new-password"
                 required
-                className="relative block w-full rounded-b-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3 dark:bg-gray-700 dark:text-white dark:ring-gray-600"
-                placeholder="Heslo (min. 12 znaků)"
+                placeholder="Minimálně 12 znaků"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">Heslo musí obsahovat alespoň 12 znaků.</p>
             </div>
-          </div>
-
-          <div>
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="group relative flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+              className="w-full"
             >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {loading ? 'Registrace...' : 'Zaregistrovat se'}
-            </button>
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
+          <div className="text-sm text-center text-muted-foreground">
+            Již máte účet?{' '}
+            <Link href="/auth/login" className="font-medium text-primary hover:underline">
+              Přihlaste se
+            </Link>
           </div>
-        </form>
-      </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

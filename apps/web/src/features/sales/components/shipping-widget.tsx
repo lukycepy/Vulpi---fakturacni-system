@@ -75,9 +75,9 @@ export default function ShippingWidget({ order }: { order: any }) {
                         onClick={createLabel} 
                         disabled={loading}
                         className="w-full sm:w-auto"
-                        variant="destructive"
+                        variant="default"
                     >
-                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Package className="mr-2 h-4 w-4" />}
                         {loading ? 'Generuji...' : 'Vytvořit štítek (Zásilkovna)'}
                     </Button>
                 </div>

@@ -2,18 +2,21 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { Loader2, KeyRound, ArrowLeft } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setMessage('');
 
     try {
       const res = await fetch('/api/auth/forgot-password', {
@@ -28,75 +31,93 @@ export default function ForgotPasswordPage() {
         throw new Error(data.message || 'Chyba při odesílání požadavku');
       }
 
-      setMessage(data.message);
-      setLoading(false);
+      setSuccess(true);
+      toast.success(data.message || 'Instrukce byly odeslány na váš email.');
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message || 'Neočekávaná chyba');
+    } finally {
       setLoading(false);
     }
   };
 
+  if (success) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+        <Card className="w-full max-w-md shadow-xl border-green-200 bg-green-50/50 dark:bg-green-900/10 dark:border-green-800">
+          <CardHeader>
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-green-100 rounded-full dark:bg-green-900/30">
+                <KeyRound className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl font-bold text-center text-green-700 dark:text-green-400">Zkontrolujte svůj email</CardTitle>
+            <CardDescription className="text-center text-green-600/80 dark:text-green-400/80">
+              Odeslali jsme instrukce pro obnovu hesla na adresu <strong>{email}</strong>.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+             <p className="text-sm text-center text-muted-foreground">
+                Pokud email nedorazil do 5 minut, zkontrolujte složku SPAM.
+             </p>
+          </CardContent>
+          <CardFooter>
+            <Link href="/auth/login" className="w-full">
+                <Button variant="outline" className="w-full">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Zpět na přihlášení
+                </Button>
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Zapomenuté heslo
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="space-y-1">
+          <div className="flex justify-center mb-4">
+            <div className="p-3 bg-primary/10 rounded-full">
+              <KeyRound className="h-6 w-6 text-primary" />
+            </div>
+          </div>
+          <CardTitle className="text-2xl font-bold text-center">Zapomenuté heslo</CardTitle>
+          <CardDescription className="text-center">
             Zadejte svůj email a my vám zašleme instrukce pro obnovu hesla.
-          </p>
-        </div>
-        
-        {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded text-sm text-center">
-            {error}
-          </div>
-        )}
-
-        {message && (
-          <div className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 p-3 rounded text-sm text-center">
-            {message}
-          </div>
-        )}
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="-space-y-px rounded-md shadow-sm">
-            <div>
-              <label htmlFor="email-address" className="sr-only">Emailová adresa</label>
-              <input
-                id="email-address"
-                name="email"
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Emailová adresa</Label>
+              <Input
+                id="email"
                 type="email"
                 autoComplete="email"
                 required
-                className="relative block w-full rounded-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 px-3 dark:bg-gray-700 dark:text-white dark:ring-gray-600"
-                placeholder="Emailová adresa"
+                placeholder="jan@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500">
-                Zpět na přihlášení
-              </Link>
-            </div>
-          </div>
-
-          <div>
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="group relative flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+              className="w-full"
             >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {loading ? 'Odesílání...' : 'Odeslat instrukce'}
-            </button>
-          </div>
-        </form>
-      </div>
+            </Button>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <Link href="/auth/login" className="text-sm font-medium text-primary hover:underline flex items-center">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Zpět na přihlášení
+          </Link>
+        </CardFooter>
+      </Card>
     </div>
   );
 }

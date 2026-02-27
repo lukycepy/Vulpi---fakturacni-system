@@ -1,84 +1,215 @@
 'use client';
 
-import { useState } from 'react';
-import { useOrganization } from '../../components/providers/organization-provider';
+import { useState, useEffect } from 'react';
+import { useOrganization } from '@/components/providers/organization-provider';
+import { useAuth } from '@/features/auth/auth-provider';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { toast } from 'sonner';
+import { Loader2, Bell, FileText, Plus } from 'lucide-react';
 
 export default function SettingsPage() {
   const { currentOrg } = useOrganization();
+  const { fetchWithAuth } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'reminders' | 'recurring'>('reminders');
+  const [fetching, setFetching] = useState(false);
+  
+  // Reminders state
+  const [remindersEnabled, setRemindersEnabled] = useState(false);
+  const [firstReminderDays, setFirstReminderDays] = useState(3);
+  const [firstReminderText, setFirstReminderText] = useState("Upozornění: Faktura je po splatnosti.");
+  const [secondReminderDays, setSecondReminderDays] = useState(7);
+  const [secondReminderText, setSecondReminderText] = useState("Důrazné upozornění: Faktura je stále neuhrazena.");
+
+  // Load settings on mount or org change
+  useEffect(() => {
+    if (!currentOrg) return;
+
+    const loadSettings = async () => {
+      setFetching(true);
+      try {
+        const res = await fetchWithAuth(`/api/organizations/${currentOrg.id}/reminder-settings`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data) {
+            setRemindersEnabled(data.isEnabled ?? false);
+            setFirstReminderDays(data.firstReminderDays ?? 3);
+            setFirstReminderText(data.firstReminderText ?? "Upozornění: Faktura je po splatnosti.");
+            setSecondReminderDays(data.secondReminderDays ?? 7);
+            setSecondReminderText(data.secondReminderText ?? "Důrazné upozornění: Faktura je stále neuhrazena.");
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load reminder settings:', error);
+        toast.error('Nepodařilo se načíst nastavení upomínek');
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    loadSettings();
+  }, [currentOrg, fetchWithAuth]);
+
+  const handleSaveReminders = async () => {
+    if (!currentOrg) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetchWithAuth(`/api/organizations/${currentOrg.id}/reminder-settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          isEnabled: remindersEnabled,
+          firstReminderDays,
+          firstReminderText,
+          secondReminderDays,
+          secondReminderText
+        })
+      });
+
+      if (!res.ok) throw new Error('Failed to save settings');
+      
+      toast.success("Nastavení upomínek bylo uloženo");
+    } catch (error) {
+      console.error(error);
+      toast.error("Chyba při ukládání nastavení");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!currentOrg) return <div className="p-6">Vyberte organizaci</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Nastavení organizace</h1>
-      
-      <div className="flex border-b mb-6">
-        <button 
-            className={`px-4 py-2 ${activeTab === 'reminders' ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('reminders')}
-        >
-            Upomínky
-        </button>
-        <button 
-            className={`px-4 py-2 ${activeTab === 'recurring' ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('recurring')}
-        >
-            Pravidelné faktury
-        </button>
+    <div className="container max-w-4xl mx-auto py-10 space-y-6">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight">Nastavení organizace</h1>
+        <p className="text-muted-foreground">
+           Správa nastavení pro {currentOrg.name}
+        </p>
       </div>
 
-      {activeTab === 'reminders' && (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow">
-              <h2 className="text-xl font-semibold mb-4">Automatické upomínky</h2>
-              <p className="text-gray-500 mb-4">Nastavte, kdy a jak se mají odesílat upomínky klientům.</p>
-              
-              <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                      <input type="checkbox" id="enableReminders" className="w-4 h-4" />
-                      <label htmlFor="enableReminders">Povolit automatické upomínky</label>
+      <Tabs defaultValue="reminders" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
+          <TabsTrigger value="reminders">Upomínky</TabsTrigger>
+          <TabsTrigger value="recurring">Pravidelné faktury</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="reminders">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                 <Bell className="h-5 w-5 text-primary" />
+                 Automatické upomínky
+              </CardTitle>
+              <CardDescription>
+                Nastavte, kdy a jak se mají odesílat upomínky klientům.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {fetching ? (
+                <div className="flex justify-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      id="enableReminders" 
+                      checked={remindersEnabled}
+                      onCheckedChange={setRemindersEnabled}
+                    />
+                    <Label htmlFor="enableReminders">Povolit automatické upomínky</Label>
                   </div>
-                  
-                  <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                          <label className="block text-sm font-medium mb-1">1. upomínka (dní po splatnosti)</label>
-                          <input type="number" defaultValue={3} className="border rounded px-3 py-2 w-full" />
-                      </div>
-                      <div>
-                          <label className="block text-sm font-medium mb-1">Text upomínky</label>
-                          <textarea className="border rounded px-3 py-2 w-full text-sm" rows={2} defaultValue="Upozornění: Faktura je po splatnosti." />
-                      </div>
-                  </div>
-                  
-                  <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                          <label className="block text-sm font-medium mb-1">2. upomínka (dní po splatnosti)</label>
-                          <input type="number" defaultValue={7} className="border rounded px-3 py-2 w-full" />
-                      </div>
-                      <div>
-                          <label className="block text-sm font-medium mb-1">Text upomínky</label>
-                          <textarea className="border rounded px-3 py-2 w-full text-sm" rows={2} defaultValue="Důrazné upozornění: Faktura je stále neuhrazena." />
-                      </div>
-                  </div>
-                  
-                  <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Uložit nastavení</button>
-              </div>
-          </div>
-      )}
 
-      {activeTab === 'recurring' && (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow">
-              <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Šablony pravidelných faktur</h2>
-                  <button className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">+ Nová šablona</button>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>1. upomínka (dní po splatnosti)</Label>
+                      <Input 
+                        type="number" 
+                        value={firstReminderDays}
+                        onChange={(e) => setFirstReminderDays(Number(e.target.value))}
+                        disabled={!remindersEnabled}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Text upomínky</Label>
+                      <Textarea 
+                        rows={2} 
+                        value={firstReminderText}
+                        onChange={(e) => setFirstReminderText(e.target.value)}
+                        disabled={!remindersEnabled}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>2. upomínka (dní po splatnosti)</Label>
+                      <Input 
+                        type="number" 
+                        value={secondReminderDays}
+                        onChange={(e) => setSecondReminderDays(Number(e.target.value))}
+                        disabled={!remindersEnabled}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Text upomínky</Label>
+                      <Textarea 
+                        rows={2} 
+                        value={secondReminderText}
+                        onChange={(e) => setSecondReminderText(e.target.value)}
+                        disabled={!remindersEnabled}
+                      />
+                    </div>
+                  </div>
+
+                  <Button onClick={handleSaveReminders} disabled={loading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Uložit nastavení
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="recurring">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                 <div>
+                    <CardTitle className="flex items-center gap-2">
+                       <FileText className="h-5 w-5 text-primary" />
+                       Šablony pravidelných faktur
+                    </CardTitle>
+                    <CardDescription>Správa šablon pro automatickou fakturaci.</CardDescription>
+                 </div>
+                 <Button size="sm">
+                    <Plus className="h-4 w-4 mr-2" /> Nová šablona
+                 </Button>
               </div>
-              
-              <div className="text-gray-500 text-center py-8 bg-gray-50 dark:bg-gray-900 rounded border border-dashed">
-                  Zatím nemáte žádné šablony.
-              </div>
-          </div>
-      )}
+            </CardHeader>
+            <CardContent>
+               <EmptyState
+                  icon={FileText}
+                  title="Zatím nemáte žádné šablony"
+                  description="Vytvořte první šablonu pro pravidelnou fakturaci."
+                  action={{
+                     label: "Vytvořit šablonu",
+                     onClick: () => {}
+                  }}
+               />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
