@@ -43,6 +43,7 @@ const pricing_module_1 = require("./modules/pricing/pricing.module");
 const backup_module_1 = require("./modules/backup/backup.module");
 const auth_module_1 = require("./modules/auth/auth.module");
 const users_module_1 = require("./modules/users/users.module");
+const clients_module_1 = require("./modules/clients/clients.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -58,6 +59,7 @@ exports.AppModule = AppModule = __decorate([
             prisma_module_1.PrismaModule,
             auth_module_1.AuthModule,
             users_module_1.UsersModule,
+            clients_module_1.ClientsModule,
             organizations_module_1.OrganizationsModule,
             invoices_module_1.InvoicesModule,
             expenses_module_1.ExpensesModule,

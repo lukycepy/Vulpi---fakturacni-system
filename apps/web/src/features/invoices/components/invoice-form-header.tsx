@@ -33,10 +33,13 @@ export function InvoiceFormHeader({
                      <SelectValue placeholder="Vyberte klienta" />
                    </SelectTrigger>
                    <SelectContent>
-                     {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                     {clients.map((c: any) => (
+                        <SelectItem key={c.id} value={c.id}>
+                            {c.name}
+                        </SelectItem>
+                     ))}
                    </SelectContent>
                  </Select>
-                 <p className="text-xs text-muted-foreground">Pro demo účely jsou klienti natvrdo</p>
                </div>
                
                <div className="grid grid-cols-2 gap-4">

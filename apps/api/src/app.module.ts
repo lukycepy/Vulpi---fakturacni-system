@@ -34,6 +34,7 @@ import { PricingModule } from './modules/pricing/pricing.module';
 import { BackupModule } from './modules/backup/backup.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { ClientsModule } from './modules/clients/clients.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { UsersModule } from './modules/users/users.module';
     PrismaModule,
     AuthModule,
     UsersModule,
+    ClientsModule,
     OrganizationsModule,
     InvoicesModule,
     ExpensesModule,

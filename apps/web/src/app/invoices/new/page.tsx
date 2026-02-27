@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useOrganization } from '@/components/providers/organization-provider';
+import { useAuth } from '@/features/auth/auth-provider';
 import { useRouter } from 'next/navigation';
 import { useCreateInvoice } from '@/features/invoices/hooks/use-create-invoice';
 import { InvoiceFormHeader } from '@/features/invoices/components/invoice-form-header';
@@ -13,6 +14,7 @@ import { Loader2 } from 'lucide-react';
 export default function NewInvoicePage() {
   const router = useRouter();
   const { currentOrg } = useOrganization();
+  const { fetchWithAuth } = useAuth();
   const { create, loading } = useCreateInvoice();
   
   // Form State
@@ -25,16 +27,21 @@ export default function NewInvoicePage() {
     { description: '', quantity: 1, unit: 'ks', unitPrice: 0, vatRate: 21 }
   ]);
 
-  // Temporary mock clients
+  // Clients State
   const [clients, setClients] = useState<any[]>([]); 
 
   useEffect(() => {
-     setClients([
-         { id: 'client-1', name: 'Alza.cz a.s.' },
-         { id: 'client-2', name: 'Rohlik.cz Finance a.s.' }
-     ]);
-     setClientId('client-1');
-  }, []);
+     if (currentOrg) {
+         fetchWithAuth(`/api/clients?organizationId=${currentOrg.id}`)
+             .then(res => res.json())
+             .then(data => {
+                 if (Array.isArray(data)) {
+                     setClients(data);
+                 }
+             })
+             .catch(err => console.error(err));
+     }
+  }, [currentOrg, fetchWithAuth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

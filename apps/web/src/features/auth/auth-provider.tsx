@@ -18,6 +18,7 @@ type AuthContextType = {
   user: User | null;
   isLoading: boolean;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   fetchWithAuth: (input: RequestInfo | URL, init?: RequestInit, options?: { skipLogout?: boolean }) => Promise<Response>;
 };
 
@@ -27,6 +28,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+
+  const fetchUser = async () => {
+      try {
+        const res = await fetchWithAuth('/api/auth/me', undefined, { skipLogout: true });
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user:', error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
   const logout = async () => {
     try {
@@ -69,29 +87,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response;
   };
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetchWithAuth('/api/auth/me', undefined, { skipLogout: true });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error('Failed to fetch user:', error);
+  const refreshUser = async () => {
+    try {
+      const res = await fetchWithAuth('/api/auth/me', undefined, { skipLogout: true });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+      } else {
         setUser(null);
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchUser();
+  useEffect(() => {
+    refreshUser();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, logout, fetchWithAuth }}>
+    <AuthContext.Provider value={{ user, isLoading, logout, refreshUser, fetchWithAuth }}>
       {children}
     </AuthContext.Provider>
   );

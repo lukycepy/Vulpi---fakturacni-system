@@ -26,10 +26,35 @@ export default function UnpaidInvoicesWidget() {
         </Card>
     );
 
+    if (!invoices || invoices.length === 0) {
+        return (
+            <Card className="h-full border-border/50 shadow-sm flex flex-col">
+                <CardHeader className="pb-2">
+                     <CardTitle className="text-lg font-medium flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                        Nezaplacené faktury
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col items-center justify-center py-6 text-center">
+                    <div className="bg-muted p-3 rounded-full mb-3">
+                        <FileText className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <h3 className="font-medium text-sm">Zatím žádné faktury</h3>
+                    <p className="text-xs text-muted-foreground mt-1 mb-4 max-w-[180px]">
+                        Vytvořte svou první fakturu a začněte sledovat platby.
+                    </p>
+                    <Button size="sm" asChild>
+                        <Link href="/invoices/new">Vytvořit fakturu</Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        );
+    }
+
     const unpaidInvoices = invoices
-        ?.filter((inv: any) => inv.status !== 'PAID' && inv.status !== 'DRAFT')
+        .filter((inv: any) => inv.status !== 'PAID' && inv.status !== 'DRAFT')
         .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
-        .slice(0, 5) || [];
+        .slice(0, 5);
 
     return (
         <Card className="h-full border-border/50 shadow-sm flex flex-col">

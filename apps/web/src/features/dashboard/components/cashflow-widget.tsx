@@ -17,7 +17,17 @@ export default function CashflowWidget() {
           </CardContent>
       </Card>
   );
-  if (!data) return null;
+  if (!data) return (
+      <Card className="mb-8 border-none bg-gradient-to-r from-emerald-600 to-emerald-800 text-white shadow-lg">
+          <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+              <TrendingUp className="h-8 w-8 mb-2 opacity-80" />
+              <h3 className="text-lg font-medium">Cashflow Predikce</h3>
+              <p className="text-sm opacity-80 mt-1 max-w-md">
+                Zatím nemáme dostatek dat pro predikci. Začněte vystavovat faktury a evidovat výdaje.
+              </p>
+          </CardContent>
+      </Card>
+  );
 
   return (
     <Card className="mb-8 border-none bg-gradient-to-r from-emerald-600 to-emerald-800 text-white shadow-lg">

@@ -12,6 +12,48 @@ export class EmailService {
     private pdfService: PdfService,
   ) {}
 
+  async sendInvoiceEmail(to: string, invoiceNumber: string, pdfBuffer: Buffer) {
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"${process.env.SMTP_FROM_NAME || 'Vulpi'}" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+      to,
+      subject: `Faktura č. ${invoiceNumber}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          <h2>Zasíláme Vám fakturu č. ${invoiceNumber}</h2>
+          <p>Dobrý den,</p>
+          <p>v příloze naleznete fakturu ve formátu PDF.</p>
+          <p>Děkujeme za využívání našich služeb.</p>
+          <br>
+          <p>S pozdravem,<br>${process.env.SMTP_FROM_NAME || 'Tým Vulpi'}</p>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: `faktura-${invoiceNumber}.pdf`,
+          content: pdfBuffer,
+        },
+      ],
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      this.logger.log(`Invoice email sent to ${to} for invoice ${invoiceNumber}`);
+    } catch (error) {
+      this.logger.error(`Failed to send invoice email to ${to}: ${error.message}`);
+      throw new BadRequestException('Chyba při odesílání emailu');
+    }
+  }
+
   async sendSystemEmail(to: string, subject: string, text: string) {
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.example.com',

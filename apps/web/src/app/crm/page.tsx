@@ -16,11 +16,16 @@ export default function CrmPage() {
   const { currentOrg } = useOrganization();
   const { stages, setStages, refresh } = usePipeline(currentOrg?.id);
   const { bep } = useBep(currentOrg?.id);
-  const { updateStage, create, updating } = useDealActions();
+  const { updateStage, create, remove, updating } = useDealActions();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newDealTitle, setNewDealTitle] = useState('');
   const [newDealValue, setNewDealValue] = useState(10000);
+
+  const handleDeleteDeal = async (dealId: string) => {
+      await remove(dealId);
+      refresh();
+  };
 
   const onDragStart = (e: any, dealId: string) => {
       e.dataTransfer.setData('dealId', dealId);

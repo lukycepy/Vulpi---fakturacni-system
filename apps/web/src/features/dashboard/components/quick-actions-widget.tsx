@@ -28,13 +28,13 @@ export default function QuickActionsWidget() {
                 </Button>
                 
                 <Button asChild className="w-full justify-start h-12" variant="outline">
-                    <Link href="/crm">
+                    <Link href="/clients">
                         <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded mr-3">
                             <UserPlus className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                         </div>
                         <div className="flex flex-col items-start text-left">
                             <span className="font-medium">Nový klient</span>
-                            <span className="text-xs text-muted-foreground font-normal">Přidat kontakt do CRM</span>
+                            <span className="text-xs text-muted-foreground font-normal">Přidat kontakt do adresáře</span>
                         </div>
                     </Link>
                 </Button>

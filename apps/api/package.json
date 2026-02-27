@@ -47,6 +47,7 @@
     "cookie-parser": "^1.4.7",
     "fast-csv": "^5.0.5",
     "mailparser": "^3.9.3",
+    "nodemailer": "^8.0.1",
     "otplib": "^13.3.0",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
