@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useOrganization } from '@/features/auth/use-organization';
+import { useOrganization } from '@/components/providers/organization-provider';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { ClientDialog } from '@/features/clients/components/client-dialog';

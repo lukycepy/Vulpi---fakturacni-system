@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { useOrganization } from '@/features/auth/use-organization';
+import { useOrganization } from '@/components/providers/organization-provider';
 
 const clientSchema = z.object({
   name: z.string().min(1, 'Název je povinný'),

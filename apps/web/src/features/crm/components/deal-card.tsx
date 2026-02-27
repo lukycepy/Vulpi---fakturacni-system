@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Card, CardFooter, CardHeader, CardTitle } from "../../../../components/ui/card";
-import { Badge } from "../../../../components/ui/badge";
+import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Calendar, User, Trash2 } from "lucide-react";
-import { ConfirmDialog } from "../../../../components/ui/confirm-dialog";
-import { Button } from "../../../../components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Button } from "@/components/ui/button";
 
 export function DealCard({ deal, onDragStart, onDelete }: { deal: any; onDragStart: (e: React.DragEvent<HTMLDivElement>, dealId: string) => void; onDelete: (dealId: string) => void }) {
     return (
